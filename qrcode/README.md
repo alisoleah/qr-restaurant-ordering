@@ -1,313 +1,187 @@
-# QR Restaurant Ordering System
+# 🍽️ QR Restaurant Ordering System
 
-A complete contactless restaurant ordering system built with Next.js and designed for Vercel deployment. Customers scan QR codes to view menus, place orders, and pay directly from their phones.
+A complete contactless restaurant ordering system built with Next.js. Customers scan QR codes to view menus, place orders, add tips, and pay directly from their phones.
 
-## Features
+## ✨ Features
 
-### Customer Experience
-- 📱 **QR Code Scanning**: Customers scan table QR codes to access menu
-- 🍽️ **Digital Menu**: Browse categorized menu items with images and descriptions
-- 🛒 **Shopping Cart**: Add items, adjust quantities, and review orders
-- 💳 **Secure Payment**: Pay with credit/debit cards or Apple Pay
-- 📧 **Digital Receipts**: Automatic email receipts and order confirmation
+### 👥 Customer Experience
+- 📱 **QR Code Scanning** - Scan table QR codes to access menu
+- 🍽️ **Digital Menu** - Browse categorized menu items with images
+- 🛒 **Shopping Cart** - Add items, adjust quantities, review orders
+- 💰 **Flexible Tipping** - Choose from 5%, 10%, 20% or custom tip amounts
+- 💳 **Secure Payment** - Pay with credit/debit cards or Apple Pay
+- 📧 **Digital Receipts** - Automatic email receipts and confirmation
+
+### 🏪 Restaurant Management
+- 👨‍💼 **Admin Dashboard** - Monitor all orders in real-time
+- 📊 **Order Tracking** - Track orders from pending to completion
+- 🏷️ **QR Generator** - Generate and print QR codes for tables
+- 📈 **Analytics** - View revenue and order statistics
+- ⚡ **Live Updates** - Real-time order status updates
+
+### 🛠️ Technical Features
+- 🚀 **Next.js 14** - Built with App Router and TypeScript
+- 🎨 **Tailwind CSS** - Modern, responsive design
+- 📱 **Mobile-First** - Optimized for phone usage
+- 🔒 **Secure** - Payment processing and data protection
+- ☁️ **Vercel Ready** - Optimized for deployment
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/qr-restaurant-ordering.git
+   cd qr-restaurant-ordering
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` with your configuration:
+   ```
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your-random-secret
+   
+   # Optional for full functionality
+   STRIPE_PUBLISHABLE_KEY=pk_test_...
+   STRIPE_SECRET_KEY=sk_test_...
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-app-password
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Visit `http://localhost:3000`
+
+## 📱 Demo
+
+### Customer Flow
+1. Visit `http://localhost:3000/table/12` (or scan generated QR code)
+2. Browse menu and add items to cart
+3. Proceed to checkout
+4. Add tip (optional)
+5. Enter email and pay
+6. Receive digital receipt
 
 ### Restaurant Management
-- 👨‍💼 **Admin Dashboard**: Monitor all orders in real-time
-- 📊 **Order Status Tracking**: Track orders from pending to completion
-- 🏷️ **QR Code Generator**: Generate and print QR codes for tables
-- 📈 **Sales Analytics**: View revenue and order statistics
-- ⚡ **Real-time Updates**: Live order status updates
+1. Visit `http://localhost:3000/admin` to view orders
+2. Update order status as you prepare food
+3. Generate QR codes at `http://localhost:3000/qr-generator`
 
-### Technical Features
-- 🚀 **Next.js 14**: Built with the latest Next.js features
-- 🎨 **Tailwind CSS**: Modern, responsive design
-- 📱 **Mobile-First**: Optimized for mobile devices
-- 🔒 **Secure**: Payment processing and data protection
-- ☁️ **Vercel Ready**: Optimized for Vercel deployment
+## 🏗️ Project Structure
 
-## Quick Start
-
-### 1. Clone and Install
-```bash
-git clone <your-repo-url>
-cd qr-restaurant-ordering
-npm install
+```
+qr-restaurant-ordering/
+├── app/                     # Next.js app directory
+│   ├── api/                 # API routes
+│   ├── admin/               # Admin dashboard
+│   ├── checkout/            # Checkout with tips
+│   ├── qr-generator/        # QR code generation
+│   ├── receipt/             # Digital receipts
+│   └── table/               # Customer menu
+├── components/              # Reusable components
+├── context/                 # React context (cart state)
+├── data/                    # Menu items and config
+└── types/                   # TypeScript definitions
 ```
 
-### 2. Environment Setup
-Copy `.env.example` to `.env.local` and configure:
-
-```bash
-cp .env.example .env.local
-```
-
-Required variables:
-```
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-random-secret
-```
-
-Optional (for full functionality):
-```
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-```
-
-### 3. Run Development Server
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000` to see your restaurant ordering system!
-
-## Deployment to Vercel
-
-### 1. Deploy to Vercel
-```bash
-npm install -g vercel
-vercel
-```
-
-### 2. Configure Environment Variables
-In your Vercel dashboard, add the environment variables from your `.env.local` file.
-
-### 3. Update URLs
-Update `NEXTAUTH_URL` to your Vercel domain:
-```
-NEXTAUTH_URL=https://your-app.vercel.app
-```
-
-## Usage Guide
-
-### For Restaurant Owners
-
-1. **Generate QR Codes**
-   - Visit `/qr-generator`
-   - Generate codes for individual tables or bulk generate
-   - Print and place QR codes on tables
-
-2. **Manage Orders**
-   - Visit `/admin` to view all orders
-   - Update order status as you prepare food
-   - Track revenue and analytics
-
-3. **Customize Menu**
-   - Edit `data/menu.ts` to update your menu items
-   - Add your own images and pricing
-   - Redeploy to update the live menu
-
-### For Customers
-
-1. **Scan QR Code** on restaurant table
-2. **Browse Menu** by category
-3. **Add Items** to cart with quantities
-4. **Review Order** and proceed to checkout
-5. **Enter Email** for receipt
-6. **Pay Securely** with card or Apple Pay
-7. **Receive Receipt** via email and on screen
-
-## Customization
+## 🎨 Customization
 
 ### Menu Items
-Edit `data/menu.ts`:
+Edit `data/menu.ts` to customize your menu:
+
 ```typescript
 export const menuItems: MenuItem[] = [
   {
     id: '1',
-    name: 'Your Dish Name',
+    name: 'Your Dish',
     description: 'Delicious description',
-    price: 1500.00, // Price in your currency
+    price: 2500.00,
     category: 'Main Course',
-    image: 'https://your-image-url.com/image.jpg',
+    image: 'https://your-image-url.com',
     available: true
-  },
-  // Add more items...
+  }
 ];
 ```
 
-### Restaurant Information
-Update restaurant details in `data/menu.ts`:
+### Restaurant Settings
+Update restaurant information in `data/menu.ts`:
+
 ```typescript
 export const restaurant = {
   name: 'Your Restaurant Name',
-  address: 'Your Address',
-  phone: 'Your Phone',
-  email: 'your@email.com',
-  taxRate: 0.14, // 14% tax
+  taxRate: 0.14,        // 14% tax
   serviceChargeRate: 0.12 // 12% service charge
 };
 ```
 
-### Styling
-The app uses Tailwind CSS. Customize colors and styling in:
-- `tailwind.config.js` - Theme configuration
-- `app/globals.css` - Global styles
-- Component files - Individual component styling
+## 🚀 Deployment
 
-## Payment Integration
+### Deploy to Vercel (Recommended)
 
-### Stripe Setup (Recommended)
-1. Create a [Stripe account](https://stripe.com)
-2. Get your API keys from the Stripe dashboard
-3. Add keys to environment variables
-4. The app includes Stripe integration ready to use
+1. **Connect to Vercel**
+   ```bash
+   npm install -g vercel
+   vercel
+   ```
 
-### Other Payment Providers
-The payment API (`app/api/payment/route.ts`) can be modified to work with:
-- PayPal
-- Square
-- Local payment providers
+2. **Set environment variables** in Vercel dashboard
 
-## Database Integration
+3. **Update NEXTAUTH_URL** to your Vercel domain
 
-Currently uses in-memory storage for demo purposes. For production:
+### Other Platforms
+- **Netlify**: Connect GitHub repo and deploy
+- **Railway**: `railway login && railway deploy`
+- **Heroku**: Add buildpack and deploy
 
-### PostgreSQL (Recommended)
-```bash
-npm install @vercel/postgres
-```
+## 🔧 Environment Variables
 
-### MongoDB
-```bash
-npm install mongodb
-```
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXTAUTH_URL` | Your app's URL | ✅ |
+| `NEXTAUTH_SECRET` | Random secret key | ✅ |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe public key | ⚪ |
+| `STRIPE_SECRET_KEY` | Stripe secret key | ⚪ |
+| `EMAIL_USER` | Email for receipts | ⚪ |
+| `EMAIL_PASS` | Email password | ⚪ |
 
-### Supabase
-```bash
-npm install @supabase/supabase-js
-```
-
-Update the API routes in `app/api/` to use your chosen database.
-
-## Email Configuration
-
-For receipt emails, configure your email provider:
-
-### Gmail
-1. Enable 2-factor authentication
-2. Generate an app password
-3. Use your Gmail and app password in environment variables
-
-### Other Providers
-Update the nodemailer configuration in `app/api/payment/route.ts`
-
-## Security Considerations
-
-- Environment variables are used for sensitive data
-- Payment processing is handled securely
-- Input validation on all forms
-- HTTPS required for production (automatic with Vercel)
-
-## Support
-
-For issues and questions:
-1. Check the GitHub issues
-2. Review the documentation
-3. Contact support
-
-## License
-
-MIT License - feel free to use this project for your restaurant or modify it for your needs.
-
-## Tech Stack
-
-- **Frontend**: Next.js 14, React, TypeScript
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **QR Codes**: qrcode library
-- **Email**: Nodemailer
-- **Deployment**: Vercel
-- **Payments**: Stripe (configurable)
-
-## Project Structure
-
-```
-qr-restaurant-ordering/
-├── app/                          # Next.js app directory
-│   ├── api/                      # API routes
-│   │   ├── orders/              # Order management endpoints
-│   │   └── payment/             # Payment processing
-│   ├── admin/                   # Admin dashboard
-│   ├── checkout/[tableNumber]/  # Checkout page
-│   ├── receipt/[orderId]/       # Receipt display
-│   ├── table/[tableNumber]/     # Customer menu view
-│   ├── qr-generator/            # QR code generation
-│   ├── globals.css              # Global styles
-│   ├── layout.tsx               # Root layout
-│   └── page.tsx                 # Home page
-├── components/                   # Reusable components
-│   ├── CartSummary.tsx          # Shopping cart sidebar
-│   └── MenuSection.tsx          # Menu display component
-├── context/                      # React context
-│   └── OrderContext.tsx         # Order state management
-├── data/                         # Static data
-│   └── menu.ts                  # Menu items and restaurant info
-├── types/                        # TypeScript definitions
-│   └── index.ts                 # Type definitions
-├── .env.example                 # Environment variables template
-├── next.config.js               # Next.js configuration
-├── package.json                 # Dependencies
-├── tailwind.config.js           # Tailwind configuration
-└── README.md                    # This file
-```
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -m 'Add feature'`
+4. Push to branch: `git push origin feature-name`
 5. Submit a pull request
 
-## Roadmap
+## 📄 License
 
-- [ ] Multi-language support
-- [ ] Kitchen display system
-- [ ] Inventory management
-- [ ] Customer loyalty program
-- [ ] Advanced analytics
-- [ ] Table reservation system
-- [ ] Staff management
-- [ ] Multi-restaurant support
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Performance Tips
+## 🙏 Support
 
-- Images are optimized with Next.js Image component
-- Components are lazy-loaded where appropriate
-- API routes are optimized for Vercel Edge Functions
-- Tailwind CSS is purged for production builds
+If you find this project helpful, please give it a ⭐️ on GitHub!
 
-## Troubleshooting
+## 📞 Contact
 
-### Common Issues
-
-**QR codes not generating:**
-- Check if qrcode package is installed
-- Verify NEXTAUTH_URL is set correctly
-
-**Payment not working:**
-- Ensure Stripe keys are configured
-- Check console for payment errors
-- Verify HTTPS in production
-
-**Emails not sending:**
-- Check email provider configuration
-- Verify EMAIL_USER and EMAIL_PASS
-- Check firewall/security settings
-
-**Orders not appearing in admin:**
-- Check API routes are working
-- Verify order creation in browser network tab
-- Clear browser cache
-
-### Getting Help
-
-1. Check browser console for errors
-2. Review Vercel deployment logs
-3. Test API endpoints directly
-4. Verify environment variables are set
+- Create an [Issue](https://github.com/YOUR_USERNAME/qr-restaurant-ordering/issues) for bug reports
+- [Discussions](https://github.com/YOUR_USERNAME/qr-restaurant-ordering/discussions) for questions
 
 ---
 
