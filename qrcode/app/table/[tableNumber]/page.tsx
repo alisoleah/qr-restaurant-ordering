@@ -70,7 +70,7 @@ export default function TablePage() {
       setMenuItems(menuData.items);
 
       // Extract unique categories
-      const uniqueCategories = [...new Set(menuData.items.map((item: MenuItem) => item.category.name))];
+      const uniqueCategories = Array.from(new Set(menuData.items.map((item: MenuItem) => item.category.name)));
       setCategories(uniqueCategories);
       setSelectedCategory(uniqueCategories[0] || '');
     } catch (err) {
