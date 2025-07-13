@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Update order status
-    const updateResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/orders/${orderId}`, {
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    const updateResponse = await fetch(`${baseUrl}/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -66,10 +67,11 @@ async function sendReceiptEmail(customerEmail: string, orderId: string, amount: 
   }
 
   try {
-    // Dynamic import to avoid build issues if nodemailer types are missing
+    // Dynamic import to avoid build issues
     const nodemailer = await import('nodemailer');
     
-    const transporter = nodemailer.default.createTransporter({
+    // Fixed: createTransport (not createTransporter)
+    const transporter = nodemailer.default.createTransport({
       service: 'gmail', // or your email provider
       auth: {
         user: process.env.EMAIL_USER,
@@ -77,6 +79,8 @@ async function sendReceiptEmail(customerEmail: string, orderId: string, amount: 
       },
     });
 
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: customerEmail,
@@ -92,7 +96,7 @@ async function sendReceiptEmail(customerEmail: string, orderId: string, amount: 
             <p><strong>Payment Status:</strong> Completed</p>
           </div>
           <p>Your order is being prepared and will be served shortly.</p>
-          <p>You can view your receipt at: <a href="${process.env.NEXTAUTH_URL}/receipt/${orderId}">View Receipt</a></p>
+          <p>You can view your receipt at: <a href="${baseUrl}/receipt/${orderId}">View Receipt</a></p>
           <hr>
           <p style="color: #666; font-size: 12px;">
             This is an automated email. Please do not reply.
@@ -105,6 +109,6 @@ async function sendReceiptEmail(customerEmail: string, orderId: string, amount: 
     console.log('Receipt email sent successfully');
   } catch (error) {
     console.error('Error sending email:', error);
-    throw error;
+    // Don't throw error - just log it so payment still succeeds
   }
 }
