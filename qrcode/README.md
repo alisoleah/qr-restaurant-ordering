@@ -354,4 +354,4 @@ If you find this project helpful, please give it a ⭐️ on GitHub!
 
 ---
 
-Built with ❤️ for restaurants worldwide. Transform your dining experience with contactless ordering!   
+Built with ❤️ for restaurants worldwide. Transform your dining experience with contactless ordering!      
