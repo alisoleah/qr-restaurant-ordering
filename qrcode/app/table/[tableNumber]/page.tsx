@@ -69,8 +69,9 @@ export default function TablePage() {
       setRestaurant(tableData.restaurant);
       setMenuItems(menuData.items);
 
-      // Extract unique categories
-      const uniqueCategories = Array.from(new Set(menuData.items.map((item: MenuItem) => item.category.name)));
+      // Extract unique categories with explicit typing
+      const categoryNames = menuData.items.map((item: MenuItem) => item.category.name);
+      const uniqueCategories: string[] = Array.from(new Set(categoryNames));
       setCategories(uniqueCategories);
       setSelectedCategory(uniqueCategories[0] || '');
     } catch (err) {
