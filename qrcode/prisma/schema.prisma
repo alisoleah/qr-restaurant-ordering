@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id                String @id @default(cuid())
+  name              String
+  address           String
+  phone             String
+  email             String
+  taxRate           Float  @default(0.14)
+  serviceChargeRate Float  @default(0.12)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  tables     Table[]
+  menuItems  MenuItem[]
+  orders     Order[]
+
+  @@map("restaurants")
+}
+
+model Table {
+  id           String @id @default(cuid())
+  number       String
+  capacity     Int    @default(4)
+  status       TableStatus @default(AVAILABLE)
+  qrCode       String?
+  restaurantId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orders     Order[]
+
+  @@unique([restaurantId, number])
+  @@map("tables")
+}
+
+model Category {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  sortOrder   Int    @default(0)
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  menuItems MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id           String @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  image        String?
+  isAvailable  Boolean @default(true)
+  sortOrder    Int    @default(0)
+  categoryId   String
+  restaurantId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  category    Category @relation(fields: [categoryId], references: [id])
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+
+  @@map("menu_items")
+}
+
+model Order {
+  id               String @id @default(cuid())
+  orderNumber      String @unique
+  tableId          String
+  restaurantId     String
+  customerEmail    String?
+  customerPhone    String?
+  subtotal         Float
+  tax              Float
+  serviceCharge    Float
+  tip              Float  @default(0)
+  tipType          TipType?
+  tipPercentage    Float?
+  total            Float
+  status           OrderStatus @default(PENDING)
+  paymentMethod    PaymentMethod?
+  paymentStatus    PaymentStatus @default(PENDING)
+  paymentId        String?
+  specialRequests  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  table      Table @relation(fields: [tableId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items      OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  menuItemId  String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  OUT_OF_SERVICE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  APPLE_PAY
+  GOOGLE_PAY
+  CASH
+}
+
+enum TipType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
