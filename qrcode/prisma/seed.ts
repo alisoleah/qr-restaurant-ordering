@@ -162,7 +162,7 @@ async function main() {
       number: i.toString(),
       capacity: i <= 10 ? 4 : i <= 15 ? 6 : 8,
       restaurantId: restaurant.id,
-      status: 'AVAILABLE',
+      status: 'AVAILABLE' as const,
     })
   }
 
