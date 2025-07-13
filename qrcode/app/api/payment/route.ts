@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 
 // Mock payment processing for demo
 // In production, integrate with Stripe, PayPal, or other payment providers
@@ -60,45 +59,52 @@ export async function POST(request: NextRequest) {
 }
 
 async function sendReceiptEmail(customerEmail: string, orderId: string, amount: number) {
-  // Configure your email provider here
-  // This is a basic example using nodemailer
-  
+  // Only send email if configuration is available
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.log('Email configuration missing, skipping receipt email');
     return;
   }
 
-  const transporter = nodemailer.createTransporter({
-    service: 'gmail', // or your email provider
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  try {
+    // Dynamic import to avoid build issues if nodemailer types are missing
+    const nodemailer = await import('nodemailer');
+    
+    const transporter = nodemailer.default.createTransporter({
+      service: 'gmail', // or your email provider
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: customerEmail,
-    subject: `Receipt for Order #${orderId}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Payment Confirmation</h2>
-        <p>Thank you for your order!</p>
-        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3>Order Details</h3>
-          <p><strong>Order ID:</strong> ${orderId}</p>
-          <p><strong>Total Amount:</strong> EGP ${amount.toFixed(2)}</p>
-          <p><strong>Payment Status:</strong> Completed</p>
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: customerEmail,
+      subject: `Receipt for Order #${orderId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Payment Confirmation</h2>
+          <p>Thank you for your order!</p>
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Order Details</h3>
+            <p><strong>Order ID:</strong> ${orderId}</p>
+            <p><strong>Total Amount:</strong> EGP ${amount.toFixed(2)}</p>
+            <p><strong>Payment Status:</strong> Completed</p>
+          </div>
+          <p>Your order is being prepared and will be served shortly.</p>
+          <p>You can view your receipt at: <a href="${process.env.NEXTAUTH_URL}/receipt/${orderId}">View Receipt</a></p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">
+            This is an automated email. Please do not reply.
+          </p>
         </div>
-        <p>Your order is being prepared and will be served shortly.</p>
-        <p>You can view your receipt at: <a href="${process.env.NEXTAUTH_URL}/receipt/${orderId}">View Receipt</a></p>
-        <hr>
-        <p style="color: #666; font-size: 12px;">
-          This is an automated email. Please do not reply.
-        </p>
-      </div>
-    `,
-  };
+      `,
+    };
 
-  await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
+    console.log('Receipt email sent successfully');
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
 }
