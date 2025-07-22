@@ -42,9 +42,46 @@ model Table {
   // Relations
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   orders     Order[]
+  billSplits BillSplit[]
 
   @@unique([restaurantId, number])
   @@map("tables")
+}
+
+model BillSplit {
+  id           String @id @default(cuid())
+  tableId      String
+  sessionId    String @unique
+  totalPeople  Int    @default(1)
+  isActive     Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  table    Table @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  persons  Person[]
+  orders   Order[]
+
+  @@map("bill_splits")
+}
+
+model Person {
+  id          String @id @default(cuid())
+  billSplitId String
+  personNumber Int
+  name        String?
+  qrCode      String?
+  totalAmount Float  @default(0)
+  isCompleted Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  billSplit BillSplit @relation(fields: [billSplitId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@unique([billSplitId, personNumber])
+  @@map("persons")
 }
 
 model Category {
@@ -88,6 +125,8 @@ model Order {
   orderNumber      String @unique
   tableId          String
   restaurantId     String
+  billSplitId      String?
+  personId         String?
   customerEmail    String?
   customerPhone    String?
   subtotal         Float
@@ -108,6 +147,8 @@ model Order {
   // Relations
   table      Table @relation(fields: [tableId], references: [id])
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  billSplit  BillSplit? @relation(fields: [billSplitId], references: [id])
+  person     Person? @relation(fields: [personId], references: [id])
   items      OrderItem[]
 
   @@map("orders")
