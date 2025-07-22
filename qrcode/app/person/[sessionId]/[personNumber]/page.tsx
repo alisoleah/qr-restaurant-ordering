@@ -28,16 +28,25 @@ interface Person {
   isCompleted: boolean;
 }
 
+// Updated interface to include all restaurant fields
+interface Restaurant {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  taxRate: number;
+  serviceChargeRate: number;
+}
+
 interface BillSplit {
   id: string;
   sessionId: string;
   totalPeople: number;
   table: {
+    id: string;
     number: string;
-    restaurant: {
-      name: string;
-      address: string;
-    };
+    restaurant: Restaurant; // Using the complete Restaurant interface
   };
 }
 
@@ -63,7 +72,7 @@ export default function PersonMenuPage() {
       setLoading(true);
       
       const [personResponse, menuResponse] = await Promise.all([
-        fetch(`/api/bill-split/person/${sessionId}/${personNumber}`),
+        fetch(`/api/person/${sessionId}/${personNumber}`), // Updated API endpoint
         fetch('/api/menu')
       ]);
 
@@ -224,7 +233,7 @@ export default function PersonMenuPage() {
             title={selectedCategory}
             items={filteredItems}
             tableNumber={billSplit.table.number}
-            tableId={billSplit.table.number}
+            tableId={billSplit.table.id} // Changed to use table.id instead of table.number
             personId={person.id}
             sessionId={sessionId}
             personNumber={personNumber}
@@ -238,6 +247,7 @@ export default function PersonMenuPage() {
           <div className="text-center text-gray-500">
             <p className="mb-2">🍽️ Ordering individually for {person.name || `Person ${person.personNumber}`}</p>
             <p className="text-sm">
+              {/* Fixed: Now safely accessing restaurant.phone with proper typing */}
               Questions? Call {billSplit.table.restaurant.phone || 'the restaurant'} for assistance
             </p>
           </div>

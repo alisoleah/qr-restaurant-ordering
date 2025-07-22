@@ -7,11 +7,14 @@ export async function GET(
   { params }: { params: { tableId: string } }
 ) {
   try {
-    const tableNumber = params.tableId; // Changed to use tableId parameter
+    const tableNumber = params.tableId;
 
-    // Find active bill split for this table
+    // Find table by number (not ID) - your schema uses String for number field
     const table = await db.table.findFirst({
-      where: { number: tableNumber },
+      where: { 
+        number: tableNumber,
+        // Optionally add restaurantId filter if you have multiple restaurants
+      },
     });
 
     if (!table) {
@@ -20,13 +23,14 @@ export async function GET(
 
     const billSplit = await db.billSplit.findFirst({
       where: {
-        tableId: table.id,
+        tableId: table.id, // This is correct - using the table.id (String)
         isActive: true,
       },
       include: {
         persons: {
           orderBy: { personNumber: 'asc' },
         },
+        table: true, // Include table info
       },
     });
 
@@ -45,8 +49,16 @@ export async function POST(
   { params }: { params: { tableId: string } }
 ) {
   try {
-    const tableNumber = params.tableId; // Changed to use tableId parameter
+    const tableNumber = params.tableId;
     const { totalPeople } = await request.json();
+
+    // Validate totalPeople
+    if (!totalPeople || totalPeople < 1 || totalPeople > 20) {
+      return NextResponse.json(
+        { error: 'Invalid number of people (1-20)' }, 
+        { status: 400 }
+      );
+    }
 
     const table = await db.table.findFirst({
       where: { number: tableNumber },
@@ -65,9 +77,29 @@ export async function POST(
       data: { isActive: false },
     });
 
-    // Create new bill split
+    // Create new bill split with proper sessionId
     const sessionId = `${table.id}-${Date.now()}`;
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+    // Create persons data first
+    const personsData = [];
+    for (let i = 1; i <= totalPeople; i++) {
+      const qrUrl = `${baseUrl}/person/${sessionId}/${i}`;
+      
+      const qrCode = await QRCode.toDataURL(qrUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+
+      personsData.push({
+        personNumber: i,
+        qrCode,
+      });
+    }
 
     const billSplit = await db.billSplit.create({
       data: {
@@ -75,32 +107,14 @@ export async function POST(
         sessionId,
         totalPeople,
         persons: {
-          create: await Promise.all(
-            Array.from({ length: totalPeople }, async (_, index) => {
-              const personNumber = index + 1;
-              const qrUrl = `${baseUrl}/person/${sessionId}/${personNumber}`;
-              
-              const qrCode = await QRCode.toDataURL(qrUrl, {
-                width: 256,
-                margin: 2,
-                color: {
-                  dark: '#000000',
-                  light: '#FFFFFF',
-                },
-              });
-
-              return {
-                personNumber,
-                qrCode,
-              };
-            })
-          ),
+          create: personsData,
         },
       },
       include: {
         persons: {
           orderBy: { personNumber: 'asc' },
         },
+        table: true,
       },
     });
 
@@ -119,8 +133,16 @@ export async function PATCH(
   { params }: { params: { tableId: string } }
 ) {
   try {
-    const tableNumber = params.tableId; // Changed to use tableId parameter
+    const tableNumber = params.tableId;
     const { totalPeople } = await request.json();
+
+    // Validate totalPeople
+    if (!totalPeople || totalPeople < 1 || totalPeople > 20) {
+      return NextResponse.json(
+        { error: 'Invalid number of people (1-20)' }, 
+        { status: 400 }
+      );
+    }
 
     const table = await db.table.findFirst({
       where: { number: tableNumber },
@@ -136,7 +158,11 @@ export async function PATCH(
         isActive: true,
       },
       include: {
-        persons: true,
+        persons: {
+          include: {
+            orders: true, // Include orders to check if person has ordered
+          },
+        },
       },
     });
 
@@ -149,7 +175,7 @@ export async function PATCH(
 
     if (totalPeople > currentPeople) {
       // Add new people
-      const newPersons = [];
+      const newPersonsData = [];
       for (let i = currentPeople + 1; i <= totalPeople; i++) {
         const qrUrl = `${baseUrl}/person/${billSplit.sessionId}/${i}`;
         const qrCode = await QRCode.toDataURL(qrUrl, {
@@ -161,7 +187,7 @@ export async function PATCH(
           },
         });
 
-        newPersons.push({
+        newPersonsData.push({
           billSplitId: billSplit.id,
           personNumber: i,
           qrCode,
@@ -169,20 +195,27 @@ export async function PATCH(
       }
 
       await db.person.createMany({
-        data: newPersons,
+        data: newPersonsData,
       });
     } else if (totalPeople < currentPeople) {
-      // Remove people (only if they haven't ordered)
-      await db.person.deleteMany({
-        where: {
-          billSplitId: billSplit.id,
-          personNumber: {
-            gt: totalPeople,
+      // Only remove people who haven't ordered and aren't completed
+      const personsToDelete = billSplit.persons.filter(
+        person => 
+          person.personNumber > totalPeople && 
+          !person.isCompleted && 
+          person.totalAmount === 0 &&
+          person.orders.length === 0 // Check if they have any orders
+      );
+
+      if (personsToDelete.length > 0) {
+        await db.person.deleteMany({
+          where: {
+            id: {
+              in: personsToDelete.map(p => p.id)
+            }
           },
-          isCompleted: false,
-          totalAmount: 0,
-        },
-      });
+        });
+      }
     }
 
     // Update bill split
@@ -193,6 +226,7 @@ export async function PATCH(
         persons: {
           orderBy: { personNumber: 'asc' },
         },
+        table: true,
       },
     });
 

@@ -45,6 +45,7 @@ model Table {
   billSplits BillSplit[]
 
   @@unique([restaurantId, number])
+  @@index([restaurantId, status])
   @@map("tables")
 }
 
@@ -62,6 +63,8 @@ model BillSplit {
   persons  Person[]
   orders   Order[]
 
+  @@index([tableId, isActive])
+  @@index([sessionId])
   @@map("bill_splits")
 }
 
@@ -81,6 +84,8 @@ model Person {
   orders    Order[]
 
   @@unique([billSplitId, personNumber])
+  @@index([billSplitId, personNumber])
+  @@index([billSplitId, isCompleted])
   @@map("persons")
 }
 
@@ -96,6 +101,7 @@ model Category {
   // Relations
   menuItems MenuItem[]
 
+  @@index([isActive, sortOrder])
   @@map("categories")
 }
 
@@ -117,6 +123,8 @@ model MenuItem {
   restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   orderItems  OrderItem[]
 
+  @@index([categoryId, isAvailable, sortOrder])
+  @@index([restaurantId, isAvailable])
   @@map("menu_items")
 }
 
@@ -151,6 +159,11 @@ model Order {
   person     Person? @relation(fields: [personId], references: [id])
   items      OrderItem[]
 
+  @@index([tableId, status])
+  @@index([billSplitId, personId])
+  @@index([restaurantId, status, createdAt])
+  @@index([orderNumber])
+  @@index([paymentStatus])
   @@map("orders")
 }
 
@@ -168,6 +181,8 @@ model OrderItem {
   order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 
+  @@index([orderId])
+  @@index([menuItemId])
   @@map("order_items")
 }
 
