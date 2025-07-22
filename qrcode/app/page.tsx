@@ -76,15 +76,24 @@ export default function HomePage() {
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
           <h3 className="text-2xl font-bold mb-4">Try the Demo</h3>
           <p className="text-gray-600 mb-8">
-            Experience the customer journey by scanning a demo QR code
+            Experience the complete restaurant ordering system
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Link href="/table/12" className="btn-primary">
-              View Demo Table 12
+              🍽️ Table Menu
+            </Link>
+            <Link href="/bill-split/12" className="btn-secondary">
+              👥 Split Bill
+            </Link>
+            <Link href="/admin" className="btn-secondary">
+              👨‍💼 Admin Dashboard
             </Link>
             <Link href="/qr-generator" className="btn-secondary">
-              Generate QR Codes
+              📱 QR Generator
             </Link>
+          </div>
+          <div className="mt-6 text-sm text-gray-500">
+            <p>✨ <strong>New:</strong> Try the bill splitting feature - perfect for groups!</p>
           </div>
         </div>
       </div>
