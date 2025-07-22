@@ -23,9 +23,12 @@ interface MenuSectionProps {
   items: MenuItem[];
   tableNumber: string;
   tableId: string;
+  personId?: string;
+  sessionId?: string;
+  personNumber?: number;
 }
 
-export default function MenuSection({ title, items, tableNumber, tableId }: MenuSectionProps) {
+export default function MenuSection({ title, items, tableNumber, tableId, personId, sessionId, personNumber }: MenuSectionProps) {
   const { dispatch } = useOrder();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -49,38 +52,76 @@ export default function MenuSection({ title, items, tableNumber, tableId }: Menu
     });
   };
 
-  const addToCart = (menuItem: MenuItem) => {
+  const addToCart = async (menuItem: MenuItem) => {
     const quantity = quantities[menuItem.id] || 1;
-    dispatch({ 
-      type: 'ADD_ITEM', 
-      payload: { 
-        menuItem: {
-          id: menuItem.id,
-          name: menuItem.name,
-          description: menuItem.description,
-          price: menuItem.price,
-          category: menuItem.category.name,
-          image: menuItem.image,
-          available: menuItem.isAvailable
-        }, 
-        quantity 
-      } 
-    });
-    dispatch({ type: 'SET_TABLE', payload: tableNumber });
     
-    // Reset quantity after adding to cart
-    setQuantities(prev => ({
-      ...prev,
-      [menuItem.id]: 0
-    }));
+    // If this is a person's individual order (bill splitting)
+    if (personId && sessionId) {
+      try {
+        const response = await fetch(`/api/bill-split/cart/${personId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            menuItemId: menuItem.id,
+            quantity,
+            notes: '',
+          }),
+        });
 
-    // Show success feedback
-    const button = document.querySelector(`[data-item-id="${menuItem.id}"]`);
-    if (button) {
-      button.classList.add('animate-pulse');
-      setTimeout(() => {
-        button.classList.remove('animate-pulse');
-      }, 500);
+        if (response.ok) {
+          // Reset quantity after adding to cart
+          setQuantities(prev => ({
+            ...prev,
+            [menuItem.id]: 0
+          }));
+          
+          // Show success feedback
+          const button = document.querySelector(`[data-item-id="${menuItem.id}"]`);
+          if (button) {
+            button.classList.add('animate-pulse');
+            setTimeout(() => {
+              button.classList.remove('animate-pulse');
+            }, 500);
+          }
+        }
+      } catch (error) {
+        console.error('Error adding item to personal cart:', error);
+      }
+    } else {
+      // Regular table order (existing functionality)
+      dispatch({ 
+        type: 'ADD_ITEM', 
+        payload: { 
+          menuItem: {
+            id: menuItem.id,
+            name: menuItem.name,
+            description: menuItem.description,
+            price: menuItem.price,
+            category: menuItem.category.name,
+            image: menuItem.image,
+            available: menuItem.isAvailable
+          }, 
+          quantity 
+        } 
+      });
+      dispatch({ type: 'SET_TABLE', payload: tableNumber });
+      
+      // Reset quantity after adding to cart
+      setQuantities(prev => ({
+        ...prev,
+        [menuItem.id]: 0
+      }));
+
+      // Show success feedback
+      const button = document.querySelector(`[data-item-id="${menuItem.id}"]`);
+      if (button) {
+        button.classList.add('animate-pulse');
+        setTimeout(() => {
+          button.classList.remove('animate-pulse');
+        }, 500);
+      }
     }
   };
 
