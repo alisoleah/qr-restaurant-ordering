@@ -1,0 +1,55 @@
+'use client'
+
+import Link from 'next/link'
+import { Home, ShieldCheck } from 'lucide-react'
+
+interface NavigationProps {
+  currentPage?: 'home' | 'admin' | 'table' | 'checkout' | 'other'
+}
+
+export default function Navigation({ currentPage = 'other' }: NavigationProps) {
+  return (
+    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo/Brand */}
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">QR</span>
+              </div>
+              <span className="font-semibold text-lg text-gray-900 hidden sm:block">Restaurant</span>
+            </Link>
+          </div>
+
+          {/* Navigation Links */}
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
+                currentPage === 'home'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Home className="w-5 h-5" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
+
+            <Link
+              href="/admin"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
+                currentPage === 'admin'
+                  ? 'bg-purple-50 text-purple-600'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <ShieldCheck className="w-5 h-5" />
+              <span className="hidden sm:inline">Admin</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  )
+}
