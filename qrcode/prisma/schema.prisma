@@ -54,6 +54,8 @@ model BillSplit {
   tableId      String
   sessionId    String @unique
   totalPeople  Int    @default(1)
+  splitType    String @default("equal") // "equal" or "itemized"
+  availableItems Json? // For itemized split: stores the items that can be selected
   isActive     Boolean @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

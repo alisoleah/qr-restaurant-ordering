@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { Download, QrCode, Plus, Minus } from 'lucide-react';
 import Link from 'next/link';
+import Navigation from '../../components/Navigation';
 
 export default function QRGeneratorPage() {
   const [tableNumber, setTableNumber] = useState('');
@@ -115,17 +116,16 @@ export default function QRGeneratorPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation currentPage="other" />
+
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
               <QrCode className="h-8 w-8 text-blue-600" />
               <h1 className="text-2xl font-bold text-gray-900">QR Code Generator</h1>
             </div>
-            <Link href="/" className="text-gray-600 hover:text-blue-600">
-              Back to Home
-            </Link>
           </div>
         </div>
       </header>

@@ -188,36 +188,25 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleItemizedSplit = async () => {
-    try {
-      setIsProcessing(true);
+  const handleItemizedSplit = () => {
+    // Simply close the modal and redirect to itemized selection page
+    setShowSplitModal(false);
 
-      // Create bill split for itemized split
-      const response = await fetch(`/api/bill-split/${tableData.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          totalPeople: tableData.capacity, // Start with table capacity
-          splitType: 'itemized',
-          availableItems: state.items // Pass the items that can be selected
-        }),
-      });
+    // Transform cart items to match ItemizedSelection component's expected format
+    const transformedItems = state.items.map(item => ({
+      menuItemId: item.menuItem.id,
+      name: item.menuItem.name,
+      price: item.menuItem.price,
+      quantity: item.quantity,
+      image: item.menuItem.image
+    }));
 
-      if (!response.ok) {
-        throw new Error('Failed to create bill split');
-      }
+    // Store the items in sessionStorage and redirect
+    sessionStorage.setItem('itemizedSplitItems', JSON.stringify(transformedItems));
+    sessionStorage.setItem('itemizedSplitTable', tableNumber);
 
-      // Redirect to QR codes display page
-      router.push(`/bill-split/${tableData.id}`);
-    } catch (error) {
-      console.error('Split bill error:', error);
-      alert('Failed to create bill split. Please try again.');
-    } finally {
-      setIsProcessing(false);
-      setShowSplitModal(false);
-    }
+    // Redirect to itemized selection page
+    router.push(`/itemized-checkout/${tableNumber}`);
   };
 
   if (state.items.length === 0) {
@@ -261,7 +250,7 @@ export default function CheckoutPage() {
           <div className="mb-8 grid md:grid-cols-2 gap-4">
             <button
               onClick={handleFullPayment}
-              disabled={isProcessing || !email}
+              disabled={isProcessing}
               className="relative bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <div className="flex flex-col items-center text-center">
