@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { User, Users, ArrowLeft } from 'lucide-react';
 import MenuSection from '../../../../components/MenuSection';
 import PersonCartSummary from '../../../../components/PersonCartSummary';
+import ItemizedSelection from '../../../../components/ItemizedSelection';
 import Link from 'next/link';
 
 interface MenuItem {
@@ -43,6 +44,8 @@ interface BillSplit {
   id: string;
   sessionId: string;
   totalPeople: number;
+  splitType?: string;
+  availableItems?: any[];
   table: {
     id: string;
     number: string;
@@ -146,7 +149,70 @@ export default function PersonMenuPage() {
   }
 
   const filteredItems = menuItems.filter(item => item.category.name === selectedCategory);
+  const isItemizedSplit = billSplit.splitType === 'itemized';
 
+  // Render itemized selection if it's an itemized split
+  if (isItemizedSplit && billSplit.availableItems && billSplit.availableItems.length > 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="py-6">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-2">
+                  <User className="h-6 w-6 text-purple-600" />
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {person.name || `Person ${person.personNumber}`}
+                  </h1>
+                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm font-medium">
+                    Itemized Split
+                  </span>
+                </div>
+
+                <div className="text-gray-600">
+                  <p className="font-medium">{billSplit.table.restaurant.name}</p>
+                  <p className="text-sm">{billSplit.table.restaurant.address}</p>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <div className="flex items-center space-x-1">
+                      <Users className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm">Table {billSplit.table.number}</span>
+                    </div>
+                    <div className="text-sm">
+                      {person.personNumber} of {billSplit.totalPeople} people
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <ItemizedSelection
+          availableItems={billSplit.availableItems}
+          sessionId={sessionId}
+          personNumber={personNumber}
+          personId={person.id}
+          tableNumber={billSplit.table.number}
+          restaurant={billSplit.table.restaurant}
+        />
+
+        {/* Footer */}
+        <footer className="bg-white border-t mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center text-gray-500">
+              <p className="mb-2">🍽️ Paying for selected items as {person.name || `Person ${person.personNumber}`}</p>
+              <p className="text-sm">
+                Questions? Call {billSplit.table.restaurant.phone || 'the restaurant'} for assistance
+              </p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  // Regular equal split ordering
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -164,7 +230,7 @@ export default function PersonMenuPage() {
                     Individual Order
                   </span>
                 </div>
-                
+
                 <div className="text-gray-600">
                   <p className="font-medium">{billSplit.table.restaurant.name}</p>
                   <p className="text-sm">{billSplit.table.restaurant.address}</p>
@@ -179,8 +245,8 @@ export default function PersonMenuPage() {
                   </div>
                 </div>
               </div>
-              
-              <PersonCartSummary 
+
+              <PersonCartSummary
                 sessionId={sessionId}
                 personNumber={personNumber}
                 personId={person.id}
