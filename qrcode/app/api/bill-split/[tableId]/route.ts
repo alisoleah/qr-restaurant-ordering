@@ -50,12 +50,28 @@ export async function POST(
 ) {
   try {
     const tableNumber = params.tableId;
-    const { totalPeople } = await request.json();
+    const { totalPeople, splitType = 'equal', availableItems } = await request.json();
 
     // Validate totalPeople
     if (!totalPeople || totalPeople < 1 || totalPeople > 20) {
       return NextResponse.json(
-        { error: 'Invalid number of people (1-20)' }, 
+        { error: 'Invalid number of people (1-20)' },
+        { status: 400 }
+      );
+    }
+
+    // Validate splitType
+    if (splitType !== 'equal' && splitType !== 'itemized') {
+      return NextResponse.json(
+        { error: 'Invalid split type. Must be "equal" or "itemized"' },
+        { status: 400 }
+      );
+    }
+
+    // For itemized split, validate availableItems
+    if (splitType === 'itemized' && (!availableItems || !Array.isArray(availableItems))) {
+      return NextResponse.json(
+        { error: 'Available items required for itemized split' },
         { status: 400 }
       );
     }
@@ -106,6 +122,8 @@ export async function POST(
         tableId: table.id,
         sessionId,
         totalPeople,
+        splitType,
+        availableItems: splitType === 'itemized' ? availableItems : null,
         persons: {
           create: personsData,
         },
