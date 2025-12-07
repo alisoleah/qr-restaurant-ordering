@@ -7,6 +7,11 @@ export async function GET() {
     const tables = await db.table.findMany({
       include: {
         orders: {
+          where: {
+            paymentStatus: {
+              not: 'COMPLETED'  // Only fetch unpaid orders
+            }
+          },
           include: {
             items: {
               include: {
@@ -24,14 +29,15 @@ export async function GET() {
       },
       orderBy: {
         number: 'asc'
-      }
+      },
+      distinct: ['number']  // Ensure unique tables by number
     });
 
     // Transform the data to include totals and payment status
     const tablesWithOrders = tables.map((table: any) => {
       const orders = table.orders || [];
       const totalAmount = orders.reduce((sum: number, order: any) => sum + order.total, 0);
-      const isPaid = orders.length > 0 ? orders.every((order: any) => order.paymentStatus === 'COMPLETED') : true;
+      const isPaid = orders.length === 0;  // If no unpaid orders, table is paid/available
 
       return {
         id: table.id,
