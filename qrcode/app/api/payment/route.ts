@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Update order status
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL ||
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     const updateResponse = await fetch(`${baseUrl}/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: {
@@ -177,8 +178,9 @@ async function sendReceiptEmail(customerEmail: string, orderId: string, amount: 
       },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
-    
+    const baseUrl = process.env.NEXTAUTH_URL ||
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: customerEmail,
