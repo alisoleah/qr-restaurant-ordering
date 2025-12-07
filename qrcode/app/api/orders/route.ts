@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '../../../lib/db';
 
 export async function POST(request: NextRequest) {
+  console.log('Creating order...');
   try {
     const body = await request.json();
     const {
@@ -53,10 +54,10 @@ export async function POST(request: NextRequest) {
         paymentStatus: 'PENDING',
         items: {
           create: items.map((item: any) => ({
-            menuItemId: item.menuItem.id,
+            menuItemId: item.menuItem?.id || item.menuItemId,
             quantity: item.quantity,
-            unitPrice: item.menuItem.price,
-            totalPrice: item.menuItem.price * item.quantity,
+            unitPrice: item.menuItem?.price || item.unitPrice,
+            totalPrice: item.menuItem?.price ? item.menuItem.price * item.quantity : item.totalPrice,
             notes: item.notes || null,
           })),
         },
@@ -115,8 +116,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating order:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { error: 'Failed to create order' },
+      { error: 'Failed to create order', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

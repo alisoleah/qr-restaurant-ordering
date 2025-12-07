@@ -1,22 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { paymobService } from '@/lib/paymob';
+import { stripeService } from '@/lib/stripe-service';
 
-// Mock payment processing for demo
-// In production, integrate with Stripe, PayPal, or other payment providers
+type PaymentProvider = 'paymob' | 'stripe' | 'mock';
+
 export async function POST(request: NextRequest) {
   try {
-    const { orderId, amount, paymentMethod, customerEmail } = await request.json();
+    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone } = await request.json();
 
-    // Simulate payment processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('Payment request:', { orderId, amount, paymentMethod, provider });
 
-    // Mock payment success (90% success rate for demo)
-    const paymentSuccess = Math.random() > 0.1;
+    // Determine which payment provider to use
+    const paymentProvider: PaymentProvider = provider || 'mock';
 
-    if (!paymentSuccess) {
-      return NextResponse.json(
-        { success: false, error: 'Payment declined' },
-        { status: 400 }
-      );
+    let paymentResult: any;
+
+    // Route to appropriate payment provider
+    switch (paymentProvider) {
+      case 'paymob':
+        paymentResult = await processPaymobPayment({
+          orderId,
+          amount,
+          customerEmail,
+          customerName,
+          customerPhone,
+        });
+        break;
+
+      case 'stripe':
+        paymentResult = await processStripePayment({
+          orderId,
+          amount,
+          customerEmail,
+          customerName,
+        });
+        break;
+
+      case 'mock':
+      default:
+        paymentResult = await processMockPayment({
+          orderId,
+          amount,
+          customerEmail,
+        });
+        break;
     }
 
     // Update order status
@@ -36,17 +63,16 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to update order status');
     }
 
-    // Send receipt email (optional - requires email configuration)
+    // Send receipt email (optional)
     try {
       await sendReceiptEmail(customerEmail, orderId, amount);
     } catch (emailError) {
       console.error('Failed to send receipt email:', emailError);
-      // Don't fail the payment if email fails
     }
 
     return NextResponse.json({
       success: true,
-      paymentId: `pay_${Date.now()}`,
+      ...paymentResult,
       orderId
     });
 
@@ -57,6 +83,78 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Paymob payment processing
+async function processPaymobPayment(data: any) {
+  try {
+    const paymentData = {
+      amount: data.amount * 100, // Convert to cents
+      currency: 'EGP',
+      orderId: data.orderId,
+      customerEmail: data.customerEmail,
+      customerPhone: data.customerPhone,
+      customerName: data.customerName,
+    };
+
+    const result = await paymobService.createPayment(paymentData);
+
+    return {
+      provider: 'paymob',
+      paymentKey: result.paymentKey,
+      iframeUrl: result.iframeUrl,
+      paymobOrderId: result.orderId,
+    };
+  } catch (error) {
+    console.error('Paymob payment error:', error);
+    throw new Error('Paymob payment failed');
+  }
+}
+
+// Stripe payment processing
+async function processStripePayment(data: any) {
+  try {
+    if (!stripeService.isConfigured()) {
+      throw new Error('Stripe is not configured');
+    }
+
+    const paymentData = {
+      amount: data.amount,
+      currency: 'EGP',
+      orderId: data.orderId,
+      customerEmail: data.customerEmail,
+      customerName: data.customerName,
+    };
+
+    const result = await stripeService.createPaymentIntent(paymentData);
+
+    return {
+      provider: 'stripe',
+      clientSecret: result.clientSecret,
+      paymentIntentId: result.paymentIntentId,
+    };
+  } catch (error) {
+    console.error('Stripe payment error:', error);
+    throw new Error('Stripe payment failed');
+  }
+}
+
+// Mock payment processing (for demo/testing)
+async function processMockPayment(data: any) {
+  // Simulate payment processing delay
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Mock payment success (90% success rate for demo)
+  const paymentSuccess = Math.random() > 0.1;
+
+  if (!paymentSuccess) {
+    throw new Error('Payment declined');
+  }
+
+  return {
+    provider: 'mock',
+    paymentId: `pay_mock_${Date.now()}`,
+  };
 }
 
 async function sendReceiptEmail(customerEmail: string, orderId: string, amount: number) {
