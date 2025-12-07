@@ -121,7 +121,8 @@ export default function CheckoutPage() {
           orderId: order.id,
           amount: total,
           paymentMethod,
-          customerEmail: email
+          customerEmail: email,
+          provider: 'mock'  // Default to mock payment for full payment checkout
         }),
       });
 

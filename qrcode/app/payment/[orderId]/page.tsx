@@ -11,6 +11,7 @@ export default function PaymentPage() {
   const [order, setOrder] = useState<any>(null);
   const [email, setEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple_pay' | 'google_pay'>('card');
+  const [provider, setProvider] = useState<'paymob' | 'stripe' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +56,8 @@ export default function PaymentPage() {
           orderId: order.id,
           amount: order.total,
           paymentMethod,
-          customerEmail: email
+          customerEmail: email,
+          provider: provider
         }),
       });
 
@@ -178,6 +180,60 @@ export default function PaymentPage() {
                   placeholder="your@email.com"
                   required
                 />
+              </div>
+
+              {/* Payment Provider Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Payment Provider
+                </label>
+
+                <div className="space-y-3">
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" style={{borderColor: provider === 'paymob' ? '#3B82F6' : '#E5E7EB'}}>
+                    <input
+                      type="radio"
+                      name="provider"
+                      value="paymob"
+                      checked={provider === 'paymob'}
+                      onChange={(e) => setProvider(e.target.value as any)}
+                      className="mr-3"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">Paymob (Egypt) 🇪🇬</div>
+                      <div className="text-sm text-gray-600">Egyptian cards, Vodafone Cash, Orange Cash</div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" style={{borderColor: provider === 'stripe' ? '#3B82F6' : '#E5E7EB'}}>
+                    <input
+                      type="radio"
+                      name="provider"
+                      value="stripe"
+                      checked={provider === 'stripe'}
+                      onChange={(e) => setProvider(e.target.value as any)}
+                      className="mr-3"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">Stripe (International) 🌍</div>
+                      <div className="text-sm text-gray-600">International cards, Apple Pay, Google Pay</div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" style={{borderColor: provider === 'mock' ? '#3B82F6' : '#E5E7EB'}}>
+                    <input
+                      type="radio"
+                      name="provider"
+                      value="mock"
+                      checked={provider === 'mock'}
+                      onChange={(e) => setProvider(e.target.value as any)}
+                      className="mr-3"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">Demo Payment (Testing) 🧪</div>
+                      <div className="text-sm text-gray-600">No real payment - for demo purposes</div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {/* Payment Methods */}

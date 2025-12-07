@@ -34,3 +34,29 @@ export async function GET(
     );
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { orderId: string } }
+) {
+  try {
+    const { orderId } = params;
+    const body = await request.json();
+
+    const order = await db.order.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: body.paymentStatus,
+        status: body.status,
+      },
+    });
+
+    return NextResponse.json(order);
+  } catch (error) {
+    console.error('Error updating order:', error);
+    return NextResponse.json(
+      { error: 'Failed to update order' },
+      { status: 500 }
+    );
+  }
+}
