@@ -4,7 +4,7 @@ import { db } from '../../../../lib/db';
 export async function GET() {
   try {
     // Fetch all tables with their orders
-    const tables = await db.table.findMany({
+    const allTables = await db.table.findMany({
       include: {
         orders: {
           where: {
@@ -29,9 +29,22 @@ export async function GET() {
       },
       orderBy: {
         number: 'asc'
-      },
-      distinct: ['number']  // Ensure unique tables by number
+      }
     });
+
+    // Group tables by number to remove duplicates
+    const tablesByNumber = new Map();
+    allTables.forEach((table: any) => {
+      if (!tablesByNumber.has(table.number)) {
+        tablesByNumber.set(table.number, table);
+      } else {
+        // Merge orders from duplicate tables
+        const existing = tablesByNumber.get(table.number);
+        existing.orders = [...existing.orders, ...table.orders];
+      }
+    });
+
+    const tables = Array.from(tablesByNumber.values());
 
     // Transform the data to include totals and payment status
     const tablesWithOrders = tables.map((table: any) => {
