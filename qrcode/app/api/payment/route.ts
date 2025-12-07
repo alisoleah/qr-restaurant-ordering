@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { paymobService } from '@/lib/paymob';
 import { stripeService } from '@/lib/stripe-service';
+import { db } from '@/lib/db';
 
 type PaymentProvider = 'paymob' | 'stripe' | 'mock';
 
@@ -46,30 +47,18 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Update order status
-    const baseUrl = process.env.NEXTAUTH_URL ||
-                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    // Update order status directly in database (avoids Vercel auth issues with fetch)
+    console.log('Updating order status:', { orderId });
 
-    console.log('Updating order status:', { baseUrl, orderId, url: `${baseUrl}/api/orders/${orderId}` });
-
-    const updateResponse = await fetch(`${baseUrl}/api/orders/${orderId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    await db.order.update({
+      where: { id: orderId },
+      data: {
         paymentStatus: 'completed',
         status: 'confirmed'
-      }),
+      },
     });
 
-    console.log('Update response status:', updateResponse.status);
-
-    if (!updateResponse.ok) {
-      const errorText = await updateResponse.text();
-      console.error('Failed to update order status:', errorText);
-      throw new Error(`Failed to update order status: ${updateResponse.status} - ${errorText}`);
-    }
+    console.log('Order updated successfully');
 
     // Send receipt email (optional)
     try {
