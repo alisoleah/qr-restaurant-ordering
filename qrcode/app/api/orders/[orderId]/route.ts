@@ -43,6 +43,8 @@ export async function PATCH(
     const { orderId } = params;
     const body = await request.json();
 
+    console.log('PATCH /api/orders/[orderId] - Updating order:', { orderId, body });
+
     const order = await db.order.update({
       where: { id: orderId },
       data: {
@@ -51,11 +53,14 @@ export async function PATCH(
       },
     });
 
+    console.log('Order updated successfully:', order.id);
+
     return NextResponse.json(order);
   } catch (error) {
     console.error('Error updating order:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { error: 'Failed to update order' },
+      { error: 'Failed to update order', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

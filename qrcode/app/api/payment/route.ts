@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
     // Update order status
     const baseUrl = process.env.NEXTAUTH_URL ||
                     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+    console.log('Updating order status:', { baseUrl, orderId, url: `${baseUrl}/api/orders/${orderId}` });
+
     const updateResponse = await fetch(`${baseUrl}/api/orders/${orderId}`, {
       method: 'PATCH',
       headers: {
@@ -60,8 +63,12 @@ export async function POST(request: NextRequest) {
       }),
     });
 
+    console.log('Update response status:', updateResponse.status);
+
     if (!updateResponse.ok) {
-      throw new Error('Failed to update order status');
+      const errorText = await updateResponse.text();
+      console.error('Failed to update order status:', errorText);
+      throw new Error(`Failed to update order status: ${updateResponse.status} - ${errorText}`);
     }
 
     // Send receipt email (optional)
