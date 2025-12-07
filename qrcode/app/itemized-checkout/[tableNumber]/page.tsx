@@ -124,7 +124,7 @@ export default function ItemizedCheckoutPage() {
       sessionStorage.removeItem('itemizedSplitItems');
       sessionStorage.removeItem('itemizedSplitTable');
 
-      router.push(`/payment/${data.order.id}`);
+      router.push(`/payment/${data.id}`);
     } catch (error) {
       console.error('Order creation error:', error);
       alert('Failed to create order. Please try again.');
