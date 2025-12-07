@@ -31,7 +31,7 @@ export async function GET() {
     const tablesWithOrders = tables.map((table: any) => {
       const orders = table.orders || [];
       const totalAmount = orders.reduce((sum: number, order: any) => sum + order.total, 0);
-      const isPaid = orders.length > 0 ? orders.every((order: any) => order.paymentStatus === 'completed') : true;
+      const isPaid = orders.length > 0 ? orders.every((order: any) => order.paymentStatus === 'COMPLETED') : true;
 
       return {
         id: table.id,
@@ -47,8 +47,8 @@ export async function GET() {
           serviceCharge: order.serviceCharge,
           tip: order.tip,
           total: order.total,
-          status: order.status,
-          paymentStatus: order.paymentStatus,
+          status: order.status.toLowerCase(),
+          paymentStatus: order.paymentStatus.toLowerCase(),
           paymentMethod: order.paymentMethod,
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
