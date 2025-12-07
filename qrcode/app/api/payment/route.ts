@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
     await db.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: 'completed',
-        status: 'confirmed'
+        paymentStatus: 'COMPLETED',
+        status: 'CONFIRMED'
       },
     });
 
