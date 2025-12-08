@@ -15,6 +15,12 @@ export default function PaymentPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Card details for test card payment
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVC, setCardCVC] = useState('');
+  const [cardName, setCardName] = useState('');
+
   useEffect(() => {
     fetchOrder();
   }, [orderId]);
@@ -43,6 +49,20 @@ export default function PaymentPage() {
       return;
     }
 
+    // Validate card details if provider is mock and payment method is card
+    if (provider === 'mock' && paymentMethod === 'card') {
+      if (!cardNumber || !cardExpiry || !cardCVC || !cardName) {
+        alert('Please fill in all card details');
+        return;
+      }
+      // Basic card number validation (remove spaces)
+      const cleanCardNumber = cardNumber.replace(/\s/g, '');
+      if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
+        alert('Please enter a valid card number');
+        return;
+      }
+    }
+
     setIsProcessing(true);
 
     try {
@@ -57,7 +77,13 @@ export default function PaymentPage() {
           amount: order.total,
           paymentMethod,
           customerEmail: email,
-          provider: provider
+          provider: provider,
+          cardDetails: provider === 'mock' && paymentMethod === 'card' ? {
+            number: cardNumber.replace(/\s/g, ''),
+            expiry: cardExpiry,
+            cvc: cardCVC,
+            name: cardName
+          } : undefined
         }),
       });
 
@@ -304,6 +330,86 @@ export default function PaymentPage() {
                   </label>
                 </div>
               </div>
+
+              {/* Card Details - Show only if provider is mock and payment method is card */}
+              {provider === 'mock' && paymentMethod === 'card' && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">Test Card Details</h3>
+                  <p className="text-sm text-blue-600 mb-4">Use test card: 4032032529364793</p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Card Number
+                      </label>
+                      <input
+                        type="text"
+                        value={cardNumber}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          const formatted = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                          setCardNumber(formatted);
+                        }}
+                        placeholder="4032 0325 2936 4793"
+                        maxLength={19}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Expiry Date
+                        </label>
+                        <input
+                          type="text"
+                          value={cardExpiry}
+                          onChange={(e) => {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value.length >= 2) {
+                              value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                            }
+                            setCardExpiry(value);
+                          }}
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          CVC
+                        </label>
+                        <input
+                          type="text"
+                          value={cardCVC}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setCardCVC(value.slice(0, 4));
+                          }}
+                          placeholder="123"
+                          maxLength={4}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Cardholder Name
+                      </label>
+                      <input
+                        type="text"
+                        value={cardName}
+                        onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                        placeholder="JOHN DOE"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Pay Button */}
               <button

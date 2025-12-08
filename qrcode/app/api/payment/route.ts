@@ -8,9 +8,9 @@ type PaymentProvider = 'paymob' | 'stripe' | 'paypal' | 'mock';
 
 export async function POST(request: NextRequest) {
   try {
-    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone } = await request.json();
+    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone, cardDetails } = await request.json();
 
-    console.log('Payment request:', { orderId, amount, paymentMethod, provider });
+    console.log('Payment request:', { orderId, amount, paymentMethod, provider, hasCardDetails: !!cardDetails });
 
     // Determine which payment provider to use
     const paymentProvider: PaymentProvider = provider || 'mock';
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
           orderId,
           amount,
           customerEmail,
+          cardDetails,
         });
         break;
     }
@@ -182,7 +183,62 @@ async function processMockPayment(data: any) {
   // Simulate payment processing delay
   await new Promise(resolve => setTimeout(resolve, 2000));
 
-  // Mock payment success (90% success rate for demo)
+  // If card details are provided, validate the test card
+  if (data.cardDetails) {
+    const { number, expiry, cvc, name } = data.cardDetails;
+
+    console.log('Processing test card payment:', { number: `****${number.slice(-4)}`, expiry, name });
+
+    // List of valid test cards
+    const validTestCards = [
+      '4032032529364793', // Your test card
+      '4111111111111111', // Standard Visa test card
+      '5555555555554444', // Standard Mastercard test card
+      '378282246310005',  // Standard Amex test card
+    ];
+
+    // Validate card number
+    if (!validTestCards.includes(number)) {
+      throw new Error('Card declined - Invalid test card number');
+    }
+
+    // Validate expiry (basic check - must be in future)
+    const [month, year] = expiry.split('/');
+    const currentYear = new Date().getFullYear() % 100;
+    const currentMonth = new Date().getMonth() + 1;
+
+    if (!month || !year) {
+      throw new Error('Card declined - Invalid expiry date');
+    }
+
+    const expMonth = parseInt(month);
+    const expYear = parseInt(year);
+
+    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+      throw new Error('Card declined - Card has expired');
+    }
+
+    // Validate CVC (must be 3 or 4 digits)
+    if (!cvc || cvc.length < 3) {
+      throw new Error('Card declined - Invalid CVC');
+    }
+
+    // Validate cardholder name
+    if (!name || name.trim().length < 3) {
+      throw new Error('Card declined - Invalid cardholder name');
+    }
+
+    console.log('Test card payment approved');
+
+    return {
+      provider: 'mock',
+      paymentId: `pay_card_${Date.now()}`,
+      cardLastFour: number.slice(-4),
+      cardBrand: number.startsWith('4') ? 'Visa' : number.startsWith('5') ? 'Mastercard' : 'Amex',
+    };
+  }
+
+  // Original mock payment (non-card payments)
   const paymentSuccess = Math.random() > 0.1;
 
   if (!paymentSuccess) {
