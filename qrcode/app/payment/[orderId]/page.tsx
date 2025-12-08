@@ -11,7 +11,7 @@ export default function PaymentPage() {
   const [order, setOrder] = useState<any>(null);
   const [email, setEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple_pay' | 'google_pay'>('card');
-  const [provider, setProvider] = useState<'paymob' | 'stripe' | 'mock'>('mock');
+  const [provider, setProvider] = useState<'paymob' | 'stripe' | 'paypal' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -68,8 +68,14 @@ export default function PaymentPage() {
       const paymentResult = await paymentResponse.json();
 
       if (paymentResult.success) {
-        // Redirect to receipt
-        router.push(`/receipt/${order.id}`);
+        // Check if PayPal requires redirect
+        if (paymentResult.redirectRequired && paymentResult.approvalUrl) {
+          // Redirect to PayPal for payment approval
+          window.location.href = paymentResult.approvalUrl;
+        } else {
+          // Redirect to receipt for other payment methods
+          router.push(`/receipt/${order.id}`);
+        }
       } else {
         throw new Error(paymentResult.error || 'Payment failed');
       }
@@ -216,6 +222,21 @@ export default function PaymentPage() {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">Stripe (International) 🌍</div>
                       <div className="text-sm text-gray-600">International cards, Apple Pay, Google Pay</div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" style={{borderColor: provider === 'paypal' ? '#3B82F6' : '#E5E7EB'}}>
+                    <input
+                      type="radio"
+                      name="provider"
+                      value="paypal"
+                      checked={provider === 'paypal'}
+                      onChange={(e) => setProvider(e.target.value as any)}
+                      className="mr-3"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">PayPal (Sandbox) 💳</div>
+                      <div className="text-sm text-gray-600">PayPal account or credit/debit card via PayPal</div>
                     </div>
                   </label>
 

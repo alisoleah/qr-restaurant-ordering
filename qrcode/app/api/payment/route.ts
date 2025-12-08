@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { paymobService } from '@/lib/paymob';
 import { stripeService } from '@/lib/stripe-service';
+import { paypalService } from '@/lib/paypal-service';
 import { db } from '@/lib/db';
 
-type PaymentProvider = 'paymob' | 'stripe' | 'mock';
+type PaymentProvider = 'paymob' | 'stripe' | 'paypal' | 'mock';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +35,14 @@ export async function POST(request: NextRequest) {
           amount,
           customerEmail,
           customerName,
+        });
+        break;
+
+      case 'paypal':
+        paymentResult = await processPayPalPayment({
+          orderId,
+          amount,
+          customerEmail,
         });
         break;
 
@@ -133,6 +142,38 @@ async function processStripePayment(data: any) {
   } catch (error) {
     console.error('Stripe payment error:', error);
     throw new Error('Stripe payment failed');
+  }
+}
+
+// PayPal payment processing
+async function processPayPalPayment(data: any) {
+  try {
+    if (!paypalService.isConfigured()) {
+      throw new Error('PayPal is not configured');
+    }
+
+    const baseUrl = process.env.NEXTAUTH_URL ||
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+    const paymentData = {
+      amount: data.amount,
+      currency: 'USD',
+      orderId: data.orderId,
+      returnUrl: `${baseUrl}/receipt/${data.orderId}`,
+      cancelUrl: `${baseUrl}/payment/${data.orderId}`,
+    };
+
+    const result = await paypalService.createOrder(paymentData);
+
+    return {
+      provider: 'paypal',
+      paypalOrderId: result.orderId,
+      approvalUrl: result.approvalUrl,
+      redirectRequired: true,
+    };
+  } catch (error) {
+    console.error('PayPal payment error:', error);
+    throw new Error('PayPal payment failed');
   }
 }
 
