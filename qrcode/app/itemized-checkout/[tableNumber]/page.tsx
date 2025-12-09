@@ -10,7 +10,8 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  image?: string;
+  image?: string | null;
+  orderItemIds: string[]; // Track which OrderItem IDs this represents
 }
 
 export default function ItemizedCheckoutPage() {
@@ -23,21 +24,32 @@ export default function ItemizedCheckoutPage() {
   const [restaurant, setRestaurant] = useState<any>(null);
 
   useEffect(() => {
-    // Load items from sessionStorage
-    const storedItems = sessionStorage.getItem('itemizedSplitItems');
-    const storedTable = sessionStorage.getItem('itemizedSplitTable');
-
-    if (!storedItems || storedTable !== tableNumber) {
-      // Redirect back to checkout if no data
-      router.push(`/checkout/${tableNumber}`);
-      return;
-    }
-
-    setAvailableItems(JSON.parse(storedItems));
-
+    // Fetch unpaid items from the database
+    fetchUnpaidItems();
     // Fetch restaurant data for tax rates
     fetchRestaurantData();
   }, [tableNumber, router]);
+
+  const fetchUnpaidItems = async () => {
+    try {
+      const response = await fetch(`/api/tables/${tableNumber}/unpaid-items`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.items && data.items.length > 0) {
+          setAvailableItems(data.items);
+        } else {
+          // No unpaid items - all items have been paid
+          alert('All items have been paid for this table!');
+          router.push(`/checkout/${tableNumber}`);
+        }
+      } else {
+        router.push(`/checkout/${tableNumber}`);
+      }
+    } catch (error) {
+      console.error('Error fetching unpaid items:', error);
+      router.push(`/checkout/${tableNumber}`);
+    }
+  };
 
   const fetchRestaurantData = async () => {
     try {
@@ -91,43 +103,30 @@ export default function ItemizedCheckoutPage() {
     try {
       setIsProcessing(true);
 
-      // Create order with selected items
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tableNumber,
-          items: selectedItemsArray.map(item => ({
-            menuItemId: item.menuItemId,
-            quantity: selectedItems[item.menuItemId],
-            unitPrice: item.price,
-            totalPrice: item.price * selectedItems[item.menuItemId]
-          })),
-          subtotal,
-          tax,
-          serviceCharge,
-          tip: 0,
-          total,
-          paymentMethod: 'card'
-        }),
+      // Collect the orderItemIds for the selected quantities
+      const orderItemIds: string[] = [];
+      selectedItemsArray.forEach(item => {
+        const selectedQty = selectedItems[item.menuItemId];
+        // Take the first 'selectedQty' orderItemIds from this item
+        const idsToAdd = item.orderItemIds.slice(0, selectedQty);
+        orderItemIds.push(...idsToAdd);
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create order');
-      }
+      // Store payment info in sessionStorage for payment page
+      sessionStorage.setItem('partialPaymentItemIds', JSON.stringify(orderItemIds));
+      sessionStorage.setItem('partialPaymentAmount', JSON.stringify({
+        subtotal,
+        tax,
+        serviceCharge,
+        total
+      }));
+      sessionStorage.setItem('partialPaymentTable', tableNumber);
 
-      const data = await response.json();
-
-      // Clear sessionStorage
-      sessionStorage.removeItem('itemizedSplitItems');
-      sessionStorage.removeItem('itemizedSplitTable');
-
-      router.push(`/payment/${data.id}`);
+      // Redirect to payment page with a special ID indicating partial payment
+      router.push(`/payment/partial-${tableNumber}`);
     } catch (error) {
-      console.error('Order creation error:', error);
-      alert('Failed to create order. Please try again.');
+      console.error('Payment preparation error:', error);
+      alert('Failed to prepare payment. Please try again.');
     } finally {
       setIsProcessing(false);
     }

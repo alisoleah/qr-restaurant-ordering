@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Restaurant {
@@ -170,14 +171,16 @@ model Order {
 }
 
 model OrderItem {
-  id          String @id @default(cuid())
-  orderId     String
-  menuItemId  String
-  quantity    Int
-  unitPrice   Float
-  totalPrice  Float
-  notes       String?
-  createdAt   DateTime @default(now())
+  id            String @id @default(cuid())
+  orderId       String
+  menuItemId    String
+  quantity      Int
+  unitPrice     Float
+  totalPrice    Float
+  notes         String?
+  isPaid        Boolean @default(false)
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
 
   // Relations
   order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -185,6 +188,7 @@ model OrderItem {
 
   @@index([orderId])
   @@index([menuItemId])
+  @@index([orderId, isPaid])
   @@map("order_items")
 }
 

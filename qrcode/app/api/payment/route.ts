@@ -8,9 +8,9 @@ type PaymentProvider = 'paymob' | 'stripe' | 'paypal' | 'mock';
 
 export async function POST(request: NextRequest) {
   try {
-    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone, cardDetails } = await request.json();
+    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone, cardDetails, itemIds } = await request.json();
 
-    console.log('Payment request:', { orderId, amount, paymentMethod, provider, hasCardDetails: !!cardDetails });
+    console.log('Payment request:', { orderId, amount, paymentMethod, provider, hasCardDetails: !!cardDetails, itemIds });
 
     // Determine which payment provider to use
     const paymentProvider: PaymentProvider = provider || 'mock';
@@ -58,17 +58,84 @@ export async function POST(request: NextRequest) {
     }
 
     // Update order status directly in database (avoids Vercel auth issues with fetch)
-    console.log('Updating order status:', { orderId });
+    console.log('Updating order status:', { orderId, itemIds });
 
-    await db.order.update({
-      where: { id: orderId },
-      data: {
-        paymentStatus: 'COMPLETED',
-        status: 'CONFIRMED'
-      },
-    });
+    // If itemIds are provided, this is a partial payment - mark only those items as paid
+    if (itemIds && Array.isArray(itemIds) && itemIds.length > 0) {
+      console.log('Partial payment: marking items as paid:', itemIds);
 
-    console.log('Order updated successfully');
+      // Mark the specific items as paid
+      await db.orderItem.updateMany({
+        where: {
+          id: { in: itemIds }
+        },
+        data: {
+          isPaid: true,
+          paidAt: new Date()
+        }
+      });
+
+      // Check if there are any unpaid items remaining for the related orders
+      const firstItem = await db.orderItem.findFirst({
+        where: { id: itemIds[0] },
+        include: { order: true }
+      });
+
+      if (firstItem) {
+        const unpaidItemsCount = await db.orderItem.count({
+          where: {
+            order: {
+              tableId: firstItem.order.tableId
+            },
+            isPaid: false
+          }
+        });
+
+        console.log('Unpaid items remaining for table:', unpaidItemsCount);
+
+        // If no unpaid items remain, mark all related orders as completed
+        if (unpaidItemsCount === 0) {
+          await db.order.updateMany({
+            where: {
+              tableId: firstItem.order.tableId,
+              paymentStatus: { not: 'COMPLETED' }
+            },
+            data: {
+              paymentStatus: 'COMPLETED',
+              status: 'CONFIRMED'
+            }
+          });
+
+          // Mark table as available
+          await db.table.update({
+            where: { id: firstItem.order.tableId },
+            data: { status: 'AVAILABLE' }
+          });
+
+          console.log('All items paid - table marked as available');
+        }
+      }
+    } else {
+      // Full order payment - original behavior
+      await db.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: 'COMPLETED',
+          status: 'CONFIRMED'
+        },
+      });
+
+      // Mark all order items as paid
+      await db.orderItem.updateMany({
+        where: { orderId: orderId },
+        data: {
+          isPaid: true,
+          paidAt: new Date()
+        }
+      });
+    }
+
+    console.log('Payment processing completed successfully');
 
     // Send receipt email (optional)
     try {

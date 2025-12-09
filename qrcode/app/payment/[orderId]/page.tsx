@@ -15,6 +15,11 @@ export default function PaymentPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // For partial payments
+  const [isPartialPayment, setIsPartialPayment] = useState(false);
+  const [partialPaymentItemIds, setPartialPaymentItemIds] = useState<string[]>([]);
+  const [partialPaymentAmount, setPartialPaymentAmount] = useState<any>(null);
+
   // Card details for test card payment
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -22,7 +27,34 @@ export default function PaymentPage() {
   const [cardName, setCardName] = useState('');
 
   useEffect(() => {
-    fetchOrder();
+    // Check if this is a partial payment
+    if (orderId.startsWith('partial-')) {
+      const itemIds = sessionStorage.getItem('partialPaymentItemIds');
+      const amount = sessionStorage.getItem('partialPaymentAmount');
+      const tableNumber = sessionStorage.getItem('partialPaymentTable');
+
+      if (itemIds && amount && tableNumber) {
+        setIsPartialPayment(true);
+        setPartialPaymentItemIds(JSON.parse(itemIds));
+        setPartialPaymentAmount(JSON.parse(amount));
+
+        // Create a mock order object for display
+        const mockOrder = {
+          id: `partial-${tableNumber}`,
+          orderNumber: `PARTIAL-${Date.now()}`,
+          tableNumber,
+          items: [],
+          ...JSON.parse(amount)
+        };
+        setOrder(mockOrder);
+        setLoading(false);
+      } else {
+        alert('Invalid partial payment session');
+        router.push('/');
+      }
+    } else {
+      fetchOrder();
+    }
   }, [orderId]);
 
   const fetchOrder = async () => {
@@ -78,6 +110,7 @@ export default function PaymentPage() {
           paymentMethod,
           customerEmail: email,
           provider: provider,
+          itemIds: isPartialPayment ? partialPaymentItemIds : undefined,
           cardDetails: provider === 'mock' && paymentMethod === 'card' ? {
             number: cardNumber.replace(/\s/g, ''),
             expiry: cardExpiry,
@@ -94,12 +127,24 @@ export default function PaymentPage() {
       const paymentResult = await paymentResponse.json();
 
       if (paymentResult.success) {
+        // Clear partial payment session storage
+        if (isPartialPayment) {
+          sessionStorage.removeItem('partialPaymentItemIds');
+          sessionStorage.removeItem('partialPaymentAmount');
+          sessionStorage.removeItem('partialPaymentTable');
+        }
+
         // Check if PayPal requires redirect
         if (paymentResult.redirectRequired && paymentResult.approvalUrl) {
           // Redirect to PayPal for payment approval
           window.location.href = paymentResult.approvalUrl;
+        } else if (isPartialPayment) {
+          // For partial payments, redirect back to itemized checkout to see remaining items
+          const tableNumber = order.tableNumber || order.id.replace('partial-', '');
+          alert('Payment successful! Redirecting to see remaining items.');
+          router.push(`/itemized-checkout/${tableNumber}`);
         } else {
-          // Redirect to receipt for other payment methods
+          // Redirect to receipt for full order payments
           router.push(`/receipt/${order.id}`);
         }
       } else {
