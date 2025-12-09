@@ -22,6 +22,9 @@ export default function ItemizedCheckoutPage() {
   const [selectedItems, setSelectedItems] = useState<{ [key: string]: number }>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [restaurant, setRestaurant] = useState<any>(null);
+  const [tip, setTip] = useState(0);
+  const [tipType, setTipType] = useState<'percentage' | 'fixed'>('percentage');
+  const [customTip, setCustomTip] = useState('');
 
   useEffect(() => {
     // Fetch unpaid items from the database
@@ -75,6 +78,28 @@ export default function ItemizedCheckoutPage() {
     });
   };
 
+  const handleTipChange = (percentage: number) => {
+    setTipType('percentage');
+    const selectedItemsArray = availableItems.filter(item => selectedItems[item.menuItemId] > 0);
+    const subtotal = selectedItemsArray.reduce((sum, item) => {
+      const quantity = selectedItems[item.menuItemId];
+      return sum + (item.price * quantity);
+    }, 0);
+    setTip(subtotal * (percentage / 100));
+    setCustomTip('');
+  };
+
+  const handleCustomTipChange = (value: string) => {
+    setCustomTip(value);
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setTip(numValue);
+      setTipType('fixed');
+    } else {
+      setTip(0);
+    }
+  };
+
   const calculateTotals = () => {
     const selectedItemsArray = availableItems.filter(item => selectedItems[item.menuItemId] > 0);
     const subtotal = selectedItemsArray.reduce((sum, item) => {
@@ -87,13 +112,13 @@ export default function ItemizedCheckoutPage() {
 
     const tax = subtotal * taxRate;
     const serviceCharge = subtotal * serviceChargeRate;
-    const total = subtotal + tax + serviceCharge;
+    const total = subtotal + tax + serviceCharge + tip;
 
-    return { subtotal, tax, serviceCharge, total, selectedItemsArray };
+    return { subtotal, tax, serviceCharge, tip, total, selectedItemsArray };
   };
 
   const handleProceedToPayment = async () => {
-    const { selectedItemsArray, subtotal, tax, serviceCharge, total } = calculateTotals();
+    const { selectedItemsArray, subtotal, tax, serviceCharge, tip: calculatedTip, total } = calculateTotals();
 
     if (selectedItemsArray.length === 0) {
       alert('Please select at least one item to pay for');
@@ -118,6 +143,7 @@ export default function ItemizedCheckoutPage() {
         subtotal,
         tax,
         serviceCharge,
+        tip: calculatedTip,
         total
       }));
       sessionStorage.setItem('partialPaymentTable', tableNumber);
@@ -258,9 +284,74 @@ export default function ItemizedCheckoutPage() {
                 <span>Service Charge ({((restaurant?.serviceChargeRate || 0.12) * 100).toFixed(0)}%)</span>
                 <span>EGP {serviceCharge.toFixed(2)}</span>
               </div>
+              {tip > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Tip</span>
+                  <span>EGP {tip.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total</span>
                 <span>EGP {total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Tip Section */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Add Tip (Optional)</h4>
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                <button
+                  onClick={() => handleTipChange(10)}
+                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
+                    tipType === 'percentage' && tip === subtotal * 0.1
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-300 hover:border-green-500'
+                  }`}
+                >
+                  10%
+                </button>
+                <button
+                  onClick={() => handleTipChange(15)}
+                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
+                    tipType === 'percentage' && tip === subtotal * 0.15
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-300 hover:border-green-500'
+                  }`}
+                >
+                  15%
+                </button>
+                <button
+                  onClick={() => handleTipChange(20)}
+                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
+                    tipType === 'percentage' && tip === subtotal * 0.2
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-300 hover:border-green-500'
+                  }`}
+                >
+                  20%
+                </button>
+                <button
+                  onClick={() => { setTip(0); setCustomTip(''); }}
+                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
+                    tip === 0
+                      ? 'border-gray-500 bg-gray-50 text-gray-700'
+                      : 'border-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  None
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Custom Amount (EGP)</label>
+                <input
+                  type="number"
+                  value={customTip}
+                  onChange={(e) => handleCustomTipChange(e.target.value)}
+                  placeholder="Enter custom tip amount"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                  min="0"
+                  step="0.01"
+                />
               </div>
             </div>
 

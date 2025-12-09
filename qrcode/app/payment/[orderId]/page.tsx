@@ -76,10 +76,7 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    if (!email) {
-      alert('Please enter your email address');
-      return;
-    }
+    // Email is now optional
 
     // Validate card details if provider is mock and payment method is card
     if (provider === 'mock' && paymentMethod === 'card') {
@@ -247,15 +244,14 @@ export default function PaymentPage() {
               {/* Email Input */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address (for receipt)
+                  Email Address (optional - for receipt)
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  placeholder="your@email.com"
-                  required
+                  placeholder="your@email.com (optional)"
                 />
               </div>
 
@@ -459,7 +455,7 @@ export default function PaymentPage() {
               {/* Pay Button */}
               <button
                 onClick={handlePayment}
-                disabled={isProcessing || !email}
+                disabled={isProcessing}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {isProcessing ? (
