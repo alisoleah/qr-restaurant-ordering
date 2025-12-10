@@ -152,7 +152,7 @@ export default function CheckoutPage() {
       setIsProcessing(true);
 
       // First create the bill split session
-      const response = await fetch(`/api/bill-split/${tableData.id}`, {
+      const response = await fetch(`/api/bill-split/${tableData.table.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ export default function CheckoutPage() {
       const billSplit = await response.json();
 
       // Redirect to QR codes display page
-      router.push(`/bill-split/${tableData.id}`);
+      router.push(`/bill-split/${tableData.table.id}`);
     } catch (error) {
       console.error('Split bill error:', error);
       alert('Failed to create bill split. Please try again.');
@@ -278,7 +278,7 @@ export default function CheckoutPage() {
                 <h2 className="text-2xl font-bold mb-2">Split Bill</h2>
                 <p className="text-purple-100 text-sm mb-4">Divide payment among friends</p>
                 <div className="text-lg font-semibold">
-                  {tableData ? `Table for ${tableData.capacity}` : 'Loading...'}
+                  {tableData?.table?.capacity ? `Table for ${tableData.table.capacity}` : 'Loading...'}
                 </div>
               </div>
             </button>
@@ -501,7 +501,7 @@ export default function CheckoutPage() {
         <SplitBillModal
           isOpen={showSplitModal}
           onClose={() => setShowSplitModal(false)}
-          tableCapacity={tableData?.capacity || 4}
+          tableCapacity={tableData?.table?.capacity || 4}
           totalAmount={total}
           onEqualSplit={handleEqualSplit}
           onItemizedSplit={handleItemizedSplit}
