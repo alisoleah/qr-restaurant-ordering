@@ -37,37 +37,20 @@ export async function GET(
       }
     });
 
-    // Aggregate items by menuItemId (since multiple orders might have the same item)
-    const aggregatedItems = unpaidItems.reduce((acc, item) => {
-      const existing = acc.find(i => i.menuItemId === item.menuItemId);
-      if (existing) {
-        existing.quantity += item.quantity;
-        existing.totalPrice += item.totalPrice;
-        existing.orderItemIds.push(item.id);
-      } else {
-        acc.push({
-          menuItemId: item.menuItemId,
-          name: item.menuItem.name,
-          price: item.unitPrice,
-          quantity: item.quantity,
-          totalPrice: item.totalPrice,
-          image: item.menuItem.image,
-          orderItemIds: [item.id], // Track which OrderItem IDs contribute to this aggregated item
-        });
-      }
-      return acc;
-    }, [] as Array<{
-      menuItemId: string;
-      name: string;
-      price: number;
-      quantity: number;
-      totalPrice: number;
-      image?: string | null;
-      orderItemIds: string[];
-    }>);
+    // Return all unpaid items individually (do NOT aggregate by menuItemId)
+    // Each OrderItem is separate, even if they're the same menu item
+    const items = unpaidItems.map(item => ({
+      orderItemId: item.id, // The specific OrderItem ID
+      menuItemId: item.menuItemId,
+      name: item.menuItem.name,
+      price: item.unitPrice,
+      quantity: item.quantity,
+      totalPrice: item.totalPrice,
+      image: item.menuItem.image,
+    }));
 
     return NextResponse.json({
-      items: aggregatedItems,
+      items,
       tableNumber,
     });
   } catch (error) {

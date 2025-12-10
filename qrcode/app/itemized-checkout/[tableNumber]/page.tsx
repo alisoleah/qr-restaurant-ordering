@@ -6,12 +6,13 @@ import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface CartItem {
+  orderItemId: string; // The specific OrderItem ID
   menuItemId: string;
   name: string;
   price: number;
   quantity: number;
+  totalPrice: number;
   image?: string | null;
-  orderItemIds: string[]; // Track which OrderItem IDs this represents
 }
 
 export default function ItemizedCheckoutPage() {
@@ -19,7 +20,7 @@ export default function ItemizedCheckoutPage() {
   const router = useRouter();
   const tableNumber = params.tableNumber as string;
   const [availableItems, setAvailableItems] = useState<CartItem[]>([]);
-  const [selectedItems, setSelectedItems] = useState<{ [key: string]: number }>({});
+  const [selectedItems, setSelectedItems] = useState<{ [orderItemId: string]: boolean }>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [restaurant, setRestaurant] = useState<any>(null);
   const [tip, setTip] = useState(0);
@@ -66,25 +67,17 @@ export default function ItemizedCheckoutPage() {
     }
   };
 
-  const handleQuantityChange = (menuItemId: string, quantity: number) => {
-    setSelectedItems(prev => {
-      if (quantity === 0) {
-        // Remove item if quantity is 0
-        const newSelected = { ...prev };
-        delete newSelected[menuItemId];
-        return newSelected;
-      }
-      return { ...prev, [menuItemId]: quantity };
-    });
+  const handleItemToggle = (orderItemId: string, isSelected: boolean) => {
+    setSelectedItems(prev => ({
+      ...prev,
+      [orderItemId]: isSelected
+    }));
   };
 
   const handleTipChange = (percentage: number) => {
     setTipType('percentage');
-    const selectedItemsArray = availableItems.filter(item => selectedItems[item.menuItemId] > 0);
-    const subtotal = selectedItemsArray.reduce((sum, item) => {
-      const quantity = selectedItems[item.menuItemId];
-      return sum + (item.price * quantity);
-    }, 0);
+    const selectedItemsArray = availableItems.filter(item => selectedItems[item.orderItemId]);
+    const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.totalPrice, 0);
     setTip(subtotal * (percentage / 100));
     setCustomTip('');
   };
@@ -101,11 +94,8 @@ export default function ItemizedCheckoutPage() {
   };
 
   const calculateTotals = () => {
-    const selectedItemsArray = availableItems.filter(item => selectedItems[item.menuItemId] > 0);
-    const subtotal = selectedItemsArray.reduce((sum, item) => {
-      const quantity = selectedItems[item.menuItemId];
-      return sum + (item.price * quantity);
-    }, 0);
+    const selectedItemsArray = availableItems.filter(item => selectedItems[item.orderItemId]);
+    const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.totalPrice, 0);
 
     const taxRate = restaurant?.taxRate || 0.14;
     const serviceChargeRate = restaurant?.serviceChargeRate || 0.12;
@@ -128,14 +118,8 @@ export default function ItemizedCheckoutPage() {
     try {
       setIsProcessing(true);
 
-      // Collect the orderItemIds for the selected quantities
-      const orderItemIds: string[] = [];
-      selectedItemsArray.forEach(item => {
-        const selectedQty = selectedItems[item.menuItemId];
-        // Take the first 'selectedQty' orderItemIds from this item
-        const idsToAdd = item.orderItemIds.slice(0, selectedQty);
-        orderItemIds.push(...idsToAdd);
-      });
+      // Collect the orderItemIds for selected items
+      const orderItemIds = selectedItemsArray.map(item => item.orderItemId);
 
       // Store payment info in sessionStorage for payment page
       sessionStorage.setItem('partialPaymentItemIds', JSON.stringify(orderItemIds));
@@ -196,24 +180,31 @@ export default function ItemizedCheckoutPage() {
             <h2 className="font-semibold text-xl text-purple-900">Select Items to Pay For</h2>
           </div>
           <p className="text-purple-800 text-sm">
-            Choose which items you want to pay for from the table's order. You can select multiple quantities of each item.
+            Select the items you want to pay for from the table's order. Each item can be paid individually.
           </p>
         </div>
 
         {/* Available Items */}
         <div className="space-y-4 mb-6">
           {availableItems.map((item) => {
-            const selectedQty = selectedItems[item.menuItemId] || 0;
-            const isSelected = selectedQty > 0;
+            const isSelected = selectedItems[item.orderItemId] || false;
 
             return (
               <div
-                key={item.menuItemId}
+                key={item.orderItemId}
                 className={`card transition-all ${
                   isSelected ? 'border-2 border-purple-500 bg-purple-50' : ''
                 }`}
               >
                 <div className="flex items-center space-x-4">
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => handleItemToggle(item.orderItemId, e.target.checked)}
+                    className="w-6 h-6 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+
                   {/* Item Image */}
                   {item.image && (
                     <img
@@ -227,29 +218,11 @@ export default function ItemizedCheckoutPage() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
                     <p className="text-gray-600 text-sm">
-                      EGP {item.price.toFixed(2)} each × Available: {item.quantity}
+                      EGP {item.price.toFixed(2)} × {item.quantity}
                     </p>
-                    {isSelected && (
-                      <p className="text-purple-700 font-medium mt-1">
-                        Total: EGP {(item.price * selectedQty).toFixed(2)}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Quantity Dropdown Selector */}
-                  <div className="flex flex-col items-end">
-                    <label className="text-sm text-gray-600 mb-1">Quantity</label>
-                    <select
-                      value={selectedQty}
-                      onChange={(e) => handleQuantityChange(item.menuItemId, parseInt(e.target.value))}
-                      className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-lg font-semibold min-w-[80px]"
-                    >
-                      {Array.from({ length: item.quantity + 1 }, (_, i) => (
-                        <option key={i} value={i}>
-                          {i}
-                        </option>
-                      ))}
-                    </select>
+                    <p className="text-purple-700 font-medium mt-1">
+                      Total: EGP {item.totalPrice.toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -264,9 +237,9 @@ export default function ItemizedCheckoutPage() {
 
             <div className="space-y-2 mb-4">
               {selectedItemsArray.map((item) => (
-                <div key={item.menuItemId} className="flex justify-between text-sm">
-                  <span>{selectedItems[item.menuItemId]}× {item.name}</span>
-                  <span>EGP {(item.price * selectedItems[item.menuItemId]).toFixed(2)}</span>
+                <div key={item.orderItemId} className="flex justify-between text-sm">
+                  <span>{item.quantity}× {item.name}</span>
+                  <span>EGP {item.totalPrice.toFixed(2)}</span>
                 </div>
               ))}
             </div>
