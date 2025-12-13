@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { CreditCard, Smartphone, ArrowLeft, Heart, Users, Wallet } from 'lucide-react';
+import { ArrowLeft, Heart, Users, Wallet } from 'lucide-react';
 import { useOrder } from '../../../context/OrderContext';
 import { restaurant } from '../../../data/menu';
 import Link from 'next/link';
@@ -14,8 +14,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const tableNumber = params.tableNumber as string;
   const { state, dispatch } = useOrder();
-  const [email, setEmail] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'apple_pay' | 'google_pay'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSplitModal, setShowSplitModal] = useState(false);
   const [tableData, setTableData] = useState<any>(null);
@@ -88,8 +86,8 @@ export default function CheckoutPage() {
         tipType: tipType === 'none' ? null : tipType,
         tipPercentage: tipType === 'percentage' ? tipPercentage : null,
         total,
-        customerEmail: email || null,
-        paymentMethod
+        customerEmail: null,
+        paymentMethod: 'CARD'
       };
 
       const response = await fetch('/api/orders', {
@@ -175,8 +173,8 @@ export default function CheckoutPage() {
         tipType: tipType === 'none' ? null : tipType,
         tipPercentage: tipType === 'percentage' ? tipPercentage : null,
         total,
-        customerEmail: email || null,
-        paymentMethod
+        customerEmail: null,
+        paymentMethod: 'CARD'
       };
 
       const response = await fetch('/api/orders', {
@@ -420,72 +418,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment Form */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-bold mb-4">Payment Details</h2>
-
-                {/* Email Input */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address (optional - for receipt)
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="your@email.com (optional)"
-                  />
-                </div>
-
-                {/* Payment Methods */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Payment Method
-                  </label>
-
-                  <div className="space-y-3">
-                    <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="card"
-                        checked={paymentMethod === 'card'}
-                        onChange={(e) => setPaymentMethod(e.target.value as 'card')}
-                        className="mr-3"
-                      />
-                      <CreditCard className="h-5 w-5 mr-2" />
-                      <span>Credit/Debit Card</span>
-                    </label>
-
-                    <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="apple_pay"
-                        checked={paymentMethod === 'apple_pay'}
-                        onChange={(e) => setPaymentMethod(e.target.value as 'apple_pay')}
-                        className="mr-3"
-                      />
-                      <Smartphone className="h-5 w-5 mr-2" />
-                      <span>Apple Pay</span>
-                    </label>
-
-                    <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="google_pay"
-                        checked={paymentMethod === 'google_pay'}
-                        onChange={(e) => setPaymentMethod(e.target.value as 'google_pay')}
-                        className="mr-3"
-                      />
-                      <Smartphone className="h-5 w-5 mr-2 text-blue-600" />
-                      <span>Google Pay</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

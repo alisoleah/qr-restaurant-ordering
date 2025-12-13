@@ -53,13 +53,18 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         paymentStatus: 'PENDING',
         items: {
-          create: items.map((item: any) => ({
-            menuItemId: item.menuItem?.id || item.menuItemId,
-            quantity: item.quantity,
-            unitPrice: item.menuItem?.price || item.unitPrice,
-            totalPrice: item.menuItem?.price ? item.menuItem.price * item.quantity : item.totalPrice,
-            notes: item.notes || null,
-          })),
+          create: items.flatMap((item: any) => {
+            // Create separate OrderItems for each quantity
+            // So "5× Caesar Salad" becomes 5 individual OrderItems with quantity=1 each
+            const unitPrice = item.menuItem?.price || item.unitPrice;
+            return Array.from({ length: item.quantity }, () => ({
+              menuItemId: item.menuItem?.id || item.menuItemId,
+              quantity: 1,  // Each OrderItem represents a single item
+              unitPrice: unitPrice,
+              totalPrice: unitPrice,  // quantity is 1, so totalPrice = unitPrice
+              notes: item.notes || null,
+            }));
+          }),
         },
       },
       include: {
