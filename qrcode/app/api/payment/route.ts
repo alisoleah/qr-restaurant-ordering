@@ -117,6 +117,15 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Full order payment - original behavior
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        select: { tableId: true }
+      });
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
       await db.order.update({
         where: { id: orderId },
         data: {
@@ -133,6 +142,24 @@ export async function POST(request: NextRequest) {
           paidAt: new Date()
         }
       });
+
+      // Check if all items for the table are now paid
+      const unpaidItemsCount = await db.orderItem.count({
+        where: {
+          order: { tableId: order.tableId },
+          isPaid: false
+        }
+      });
+
+      // If no unpaid items remain, mark table as AVAILABLE
+      if (unpaidItemsCount === 0) {
+        await db.table.update({
+          where: { id: order.tableId },
+          data: { status: 'AVAILABLE' }
+        });
+
+        console.log('All items paid - table marked as available');
+      }
     }
 
     console.log('Payment processing completed successfully');
