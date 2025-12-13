@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Heart, Users, Wallet } from 'lucide-react';
+import { ArrowLeft, Users, Wallet } from 'lucide-react';
 import { useOrder } from '../../../context/OrderContext';
 import { restaurant } from '../../../data/menu';
 import Link from 'next/link';
@@ -17,11 +17,6 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSplitModal, setShowSplitModal] = useState(false);
   const [tableData, setTableData] = useState<any>(null);
-
-  // Tip state
-  const [tipType, setTipType] = useState<'percentage' | 'custom' | 'none'>('none');
-  const [tipPercentage, setTipPercentage] = useState<number>(0);
-  const [customTipAmount, setCustomTipAmount] = useState<string>('');
 
   // Fetch table data for capacity
   useEffect(() => {
@@ -42,49 +37,22 @@ export default function CheckoutPage() {
   const subtotal = state.items.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
   const tax = subtotal * restaurant.taxRate;
   const serviceCharge = subtotal * restaurant.serviceChargeRate;
-
-  // Calculate tip
-  let tipAmount = 0;
-  if (tipType === 'percentage' && tipPercentage > 0) {
-    tipAmount = subtotal * (tipPercentage / 100);
-  } else if (tipType === 'custom' && customTipAmount) {
-    tipAmount = parseFloat(customTipAmount) || 0;
-  }
-
-  const total = subtotal + tax + serviceCharge + tipAmount;
-
-  const handleTipPercentage = (percentage: number) => {
-    setTipType('percentage');
-    setTipPercentage(percentage);
-    setCustomTipAmount('');
-  };
-
-  const handleCustomTip = (amount: string) => {
-    setTipType('custom');
-    setCustomTipAmount(amount);
-    setTipPercentage(0);
-  };
-
-  const handleNoTip = () => {
-    setTipType('none');
-    setTipPercentage(0);
-    setCustomTipAmount('');
-  };
+  const total = subtotal + tax + serviceCharge;
 
   const handleFullPayment = async () => {
     setIsProcessing(true);
 
     try {
-      // Create order with tip
+      // Create order
       const orderData = {
         tableNumber,
         items: state.items,
         subtotal,
         tax,
         serviceCharge,
-        tip: tipAmount,
-        tipType: tipType === 'none' ? null : tipType,
-        tipPercentage: tipType === 'percentage' ? tipPercentage : null,
+        tip: 0,
+        tipType: null,
+        tipPercentage: null,
         total,
         customerEmail: null,
         paymentMethod: 'CARD'
@@ -132,9 +100,9 @@ export default function CheckoutPage() {
             subtotal,
             tax,
             serviceCharge,
-            tip: tipAmount,
-            tipType: tipType === 'none' ? null : tipType,
-            tipPercentage: tipType === 'percentage' ? tipPercentage : null,
+            tip: 0,
+            tipType: null,
+            tipPercentage: null,
             total
           }
         }),
@@ -169,9 +137,9 @@ export default function CheckoutPage() {
         subtotal,
         tax,
         serviceCharge,
-        tip: tipAmount,
-        tipType: tipType === 'none' ? null : tipType,
-        tipPercentage: tipType === 'percentage' ? tipPercentage : null,
+        tip: 0,
+        tipType: null,
+        tipPercentage: null,
         total,
         customerEmail: null,
         paymentMethod: 'CARD'
@@ -299,90 +267,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Tip Selection */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  <h2 className="text-xl font-bold">Add Tip</h2>
-                  <span className="text-sm text-gray-500">(Optional)</span>
-                </div>
-
-                {/* Percentage Tips */}
-                <div className="mb-4">
-                  <div className="grid grid-cols-4 gap-2 mb-3">
-                    <button
-                      onClick={handleNoTip}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                        tipType === 'none'
-                          ? 'bg-gray-500 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      No Tip
-                    </button>
-                    <button
-                      onClick={() => handleTipPercentage(5)}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                        tipType === 'percentage' && tipPercentage === 5
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      5%
-                    </button>
-                    <button
-                      onClick={() => handleTipPercentage(10)}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                        tipType === 'percentage' && tipPercentage === 10
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      10%
-                    </button>
-                    <button
-                      onClick={() => handleTipPercentage(20)}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                        tipType === 'percentage' && tipPercentage === 20
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      20%
-                    </button>
-                  </div>
-
-                  {tipType === 'percentage' && tipPercentage > 0 && (
-                    <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
-                      {tipPercentage}% tip: EGP {tipAmount.toFixed(2)}
-                    </div>
-                  )}
-                </div>
-
-                {/* Custom Tip */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom Tip Amount
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-gray-500">EGP</span>
-                    <input
-                      type="number"
-                      value={customTipAmount}
-                      onChange={(e) => handleCustomTip(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  {tipType === 'custom' && tipAmount > 0 && (
-                    <div className="text-sm text-gray-600 bg-green-50 p-2 rounded mt-2">
-                      Custom tip: EGP {tipAmount.toFixed(2)}
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
 
             {/* Right Column - Payment */}
@@ -403,14 +287,6 @@ export default function CheckoutPage() {
                     <span>Service Charge (12%)</span>
                     <span>EGP {serviceCharge.toFixed(2)}</span>
                   </div>
-                  {tipAmount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>
-                        Tip {tipType === 'percentage' ? `(${tipPercentage}%)` : '(Custom)'}
-                      </span>
-                      <span>EGP {tipAmount.toFixed(2)}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total</span>
                     <span>EGP {total.toFixed(2)}</span>

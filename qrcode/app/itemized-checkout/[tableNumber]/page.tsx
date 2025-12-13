@@ -6,7 +6,7 @@ import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface CartItem {
-  orderItemId: string; // The specific OrderItem ID
+  orderItemId: string;
   menuItemId: string;
   name: string;
   price: number;
@@ -20,19 +20,14 @@ export default function ItemizedCheckoutPage() {
   const router = useRouter();
   const tableNumber = params.tableNumber as string;
   const [availableItems, setAvailableItems] = useState<CartItem[]>([]);
-  const [selectedItems, setSelectedItems] = useState<{ [orderItemId: string]: boolean }>({});
+  const [selectedQuantities, setSelectedQuantities] = useState<{ [orderItemId: string]: number }>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [restaurant, setRestaurant] = useState<any>(null);
-  const [tip, setTip] = useState(0);
-  const [tipType, setTipType] = useState<'percentage' | 'fixed'>('percentage');
-  const [customTip, setCustomTip] = useState('');
 
   useEffect(() => {
-    // Fetch unpaid items from the database
     fetchUnpaidItems();
-    // Fetch restaurant data for tax rates
     fetchRestaurantData();
-  }, [tableNumber, router]);
+  }, [tableNumber]);
 
   const fetchUnpaidItems = async () => {
     try {
@@ -41,8 +36,13 @@ export default function ItemizedCheckoutPage() {
         const data = await response.json();
         if (data.items && data.items.length > 0) {
           setAvailableItems(data.items);
+          // Initialize all quantities to 0
+          const initialQuantities: { [key: string]: number } = {};
+          data.items.forEach((item: CartItem) => {
+            initialQuantities[item.orderItemId] = 0;
+          });
+          setSelectedQuantities(initialQuantities);
         } else {
-          // No unpaid items - all items have been paid
           alert('All items have been paid for this table!');
           router.push(`/checkout/${tableNumber}`);
         }
@@ -67,72 +67,65 @@ export default function ItemizedCheckoutPage() {
     }
   };
 
-  const handleItemToggle = (orderItemId: string, isSelected: boolean) => {
-    setSelectedItems(prev => ({
+  const handleQuantityChange = (orderItemId: string, quantity: number) => {
+    setSelectedQuantities(prev => ({
       ...prev,
-      [orderItemId]: isSelected
+      [orderItemId]: quantity
     }));
   };
 
-  const handleTipChange = (percentage: number) => {
-    setTipType('percentage');
-    const selectedItemsArray = availableItems.filter(item => selectedItems[item.orderItemId]);
-    const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.totalPrice, 0);
-    setTip(subtotal * (percentage / 100));
-    setCustomTip('');
-  };
-
-  const handleCustomTipChange = (value: string) => {
-    setCustomTip(value);
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue >= 0) {
-      setTip(numValue);
-      setTipType('fixed');
-    } else {
-      setTip(0);
-    }
-  };
-
   const calculateTotals = () => {
-    const selectedItemsArray = availableItems.filter(item => selectedItems[item.orderItemId]);
-    const subtotal = selectedItemsArray.reduce((sum, item) => sum + item.totalPrice, 0);
+    let subtotal = 0;
+
+    availableItems.forEach(item => {
+      const selectedQty = selectedQuantities[item.orderItemId] || 0;
+      if (selectedQty > 0) {
+        // Calculate based on unit price and selected quantity
+        subtotal += item.price * selectedQty;
+      }
+    });
 
     const taxRate = restaurant?.taxRate || 0.14;
     const serviceChargeRate = restaurant?.serviceChargeRate || 0.12;
-
     const tax = subtotal * taxRate;
     const serviceCharge = subtotal * serviceChargeRate;
-    const total = subtotal + tax + serviceCharge + tip;
+    const total = subtotal + tax + serviceCharge;
 
-    return { subtotal, tax, serviceCharge, tip, total, selectedItemsArray };
+    return { subtotal, tax, serviceCharge, total };
   };
 
-  const handleProceedToPayment = async () => {
-    const { selectedItemsArray, subtotal, tax, serviceCharge, tip: calculatedTip, total } = calculateTotals();
+  const handleProceedToPayment = () => {
+    const { subtotal, tax, serviceCharge, total } = calculateTotals();
 
-    if (selectedItemsArray.length === 0) {
+    if (subtotal === 0) {
       alert('Please select at least one item to pay for');
       return;
     }
 
+    setIsProcessing(true);
+
     try {
-      setIsProcessing(true);
+      // Collect orderItemIds based on selected quantities
+      // If item has quantity 4 and user selected 2, we need to mark 2 of them as paid
+      // Since each OrderItem already has quantity stored, we just need to collect the orderItemId and quantity
+      const selectedItems = availableItems
+        .filter(item => (selectedQuantities[item.orderItemId] || 0) > 0)
+        .map(item => ({
+          orderItemId: item.orderItemId,
+          selectedQuantity: selectedQuantities[item.orderItemId]
+        }));
 
-      // Collect the orderItemIds for selected items
-      const orderItemIds = selectedItemsArray.map(item => item.orderItemId);
-
-      // Store payment info in sessionStorage for payment page
-      sessionStorage.setItem('partialPaymentItemIds', JSON.stringify(orderItemIds));
+      // For partial payment with quantities, we need to handle this differently
+      // We'll pass the orderItemIds and quantities to the payment page
+      sessionStorage.setItem('partialPaymentItems', JSON.stringify(selectedItems));
       sessionStorage.setItem('partialPaymentAmount', JSON.stringify({
         subtotal,
         tax,
         serviceCharge,
-        tip: calculatedTip,
         total
       }));
       sessionStorage.setItem('partialPaymentTable', tableNumber);
 
-      // Redirect to payment page with a special ID indicating partial payment
       router.push(`/payment/partial-${tableNumber}`);
     } catch (error) {
       console.error('Payment preparation error:', error);
@@ -142,7 +135,7 @@ export default function ItemizedCheckoutPage() {
     }
   };
 
-  const { subtotal, tax, serviceCharge, total, selectedItemsArray } = calculateTotals();
+  const { subtotal, tax, serviceCharge, total } = calculateTotals();
 
   if (!availableItems.length) {
     return (
@@ -157,7 +150,6 @@ export default function ItemizedCheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
@@ -180,14 +172,15 @@ export default function ItemizedCheckoutPage() {
             <h2 className="font-semibold text-xl text-purple-900">Select Items to Pay For</h2>
           </div>
           <p className="text-purple-800 text-sm">
-            Select the items you want to pay for from the table's order. Each item can be paid individually.
+            Choose how many of each item you want to pay for using the dropdown menus.
           </p>
         </div>
 
         {/* Available Items */}
         <div className="space-y-4 mb-6">
           {availableItems.map((item) => {
-            const isSelected = selectedItems[item.orderItemId] || false;
+            const selectedQty = selectedQuantities[item.orderItemId] || 0;
+            const isSelected = selectedQty > 0;
 
             return (
               <div
@@ -196,33 +189,45 @@ export default function ItemizedCheckoutPage() {
                   isSelected ? 'border-2 border-purple-500 bg-purple-50' : ''
                 }`}
               >
-                <div className="flex items-center space-x-4">
-                  {/* Checkbox */}
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => handleItemToggle(item.orderItemId, e.target.checked)}
-                    className="w-6 h-6 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                  />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 flex-1">
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-20 h-20 object-cover rounded-lg"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        EGP {item.price.toFixed(2)} × {item.quantity}
+                      </p>
+                      <p className="text-purple-600 font-semibold mt-1">
+                        Total: EGP {item.totalPrice.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
 
-                  {/* Item Image */}
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                  )}
-
-                  {/* Item Details */}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
-                    <p className="text-gray-600 text-sm">
-                      EGP {item.price.toFixed(2)} × {item.quantity}
-                    </p>
-                    <p className="text-purple-700 font-medium mt-1">
-                      Total: EGP {item.totalPrice.toFixed(2)}
-                    </p>
+                  {/* Quantity Dropdown */}
+                  <div className="flex flex-col items-end space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Pay for:</label>
+                    <select
+                      value={selectedQty}
+                      onChange={(e) => handleQuantityChange(item.orderItemId, parseInt(e.target.value))}
+                      className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none min-w-[100px]"
+                    >
+                      {Array.from({ length: item.quantity + 1 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {i} {i === 1 ? 'item' : 'items'}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedQty > 0 && (
+                      <p className="text-sm text-purple-600 font-medium">
+                        EGP {(item.price * selectedQty).toFixed(2)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -230,119 +235,37 @@ export default function ItemizedCheckoutPage() {
           })}
         </div>
 
-        {/* Summary */}
-        {selectedItemsArray.length > 0 && (
-          <div className="card bg-gray-50 mb-6">
-            <h3 className="font-semibold text-lg mb-4">Your Bill Summary</h3>
-
-            <div className="space-y-2 mb-4">
-              {selectedItemsArray.map((item) => (
-                <div key={item.orderItemId} className="flex justify-between text-sm">
-                  <span>{item.quantity}× {item.name}</span>
-                  <span>EGP {item.totalPrice.toFixed(2)}</span>
-                </div>
-              ))}
+        {/* Bill Summary */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">Your Bill Summary</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>EGP {subtotal.toFixed(2)}</span>
             </div>
-
-            <div className="border-t pt-3 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span>EGP {subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Tax ({((restaurant?.taxRate || 0.14) * 100).toFixed(0)}%)</span>
-                <span>EGP {tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Service Charge ({((restaurant?.serviceChargeRate || 0.12) * 100).toFixed(0)}%)</span>
-                <span>EGP {serviceCharge.toFixed(2)}</span>
-              </div>
-              {tip > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Tip</span>
-                  <span>EGP {tip.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-lg border-t pt-2">
-                <span>Total</span>
-                <span>EGP {total.toFixed(2)}</span>
-              </div>
+            <div className="flex justify-between text-sm">
+              <span>Tax (14%)</span>
+              <span>EGP {tax.toFixed(2)}</span>
             </div>
-
-            {/* Tip Section */}
-            <div className="border-t pt-4 mt-4">
-              <h4 className="font-semibold text-gray-900 mb-3">Add Tip (Optional)</h4>
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                <button
-                  onClick={() => handleTipChange(10)}
-                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
-                    tipType === 'percentage' && tip === subtotal * 0.1
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-300 hover:border-green-500'
-                  }`}
-                >
-                  10%
-                </button>
-                <button
-                  onClick={() => handleTipChange(15)}
-                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
-                    tipType === 'percentage' && tip === subtotal * 0.15
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-300 hover:border-green-500'
-                  }`}
-                >
-                  15%
-                </button>
-                <button
-                  onClick={() => handleTipChange(20)}
-                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
-                    tipType === 'percentage' && tip === subtotal * 0.2
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-300 hover:border-green-500'
-                  }`}
-                >
-                  20%
-                </button>
-                <button
-                  onClick={() => { setTip(0); setCustomTip(''); }}
-                  className={`px-3 py-2 rounded-lg border-2 font-medium transition ${
-                    tip === 0
-                      ? 'border-gray-500 bg-gray-50 text-gray-700'
-                      : 'border-gray-300 hover:border-gray-500'
-                  }`}
-                >
-                  None
-                </button>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Custom Amount (EGP)</label>
-                <input
-                  type="number"
-                  value={customTip}
-                  onChange={(e) => handleCustomTipChange(e.target.value)}
-                  placeholder="Enter custom tip amount"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
+            <div className="flex justify-between text-sm">
+              <span>Service Charge (12%)</span>
+              <span>EGP {serviceCharge.toFixed(2)}</span>
             </div>
-
-            <button
-              onClick={handleProceedToPayment}
-              disabled={isProcessing}
-              className="w-full mt-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isProcessing ? 'Processing...' : `Proceed to Payment - EGP ${total.toFixed(2)}`}
-            </button>
+            <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+              <span>Total</span>
+              <span>EGP {total.toFixed(2)}</span>
+            </div>
           </div>
-        )}
+        </div>
 
-        {selectedItemsArray.length === 0 && (
-          <div className="card text-center py-12">
-            <p className="text-gray-500">No items selected yet. Click on items above to select them.</p>
-          </div>
-        )}
+        {/* Proceed Button */}
+        <button
+          onClick={handleProceedToPayment}
+          disabled={isProcessing || subtotal === 0}
+          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? 'Processing...' : `Proceed to Payment - EGP ${total.toFixed(2)}`}
+        </button>
       </div>
     </div>
   );
