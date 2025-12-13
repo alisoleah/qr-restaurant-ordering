@@ -37,16 +37,47 @@ export async function GET(
       }
     });
 
-    // Return all unpaid items individually (do NOT aggregate by menuItemId)
-    // Each OrderItem is separate, even if they're the same menu item
-    const items = unpaidItems.map(item => ({
-      orderItemId: item.id, // The specific OrderItem ID
+    // Aggregate items by menuItemId to group same items together
+    const aggregatedMap = new Map<string, {
+      menuItemId: string;
+      name: string;
+      price: number;
+      quantity: number;
+      totalPrice: number;
+      image: string | null;
+      orderItemIds: string[];
+    }>();
+
+    unpaidItems.forEach(item => {
+      const existing = aggregatedMap.get(item.menuItemId);
+      if (existing) {
+        // Add to existing group
+        existing.quantity += item.quantity;
+        existing.totalPrice += item.totalPrice;
+        existing.orderItemIds.push(item.id);
+      } else {
+        // Create new group
+        aggregatedMap.set(item.menuItemId, {
+          menuItemId: item.menuItemId,
+          name: item.menuItem.name,
+          price: item.unitPrice,
+          quantity: item.quantity,
+          totalPrice: item.totalPrice,
+          image: item.menuItem.image,
+          orderItemIds: [item.id]
+        });
+      }
+    });
+
+    const items = Array.from(aggregatedMap.values()).map(item => ({
+      orderItemId: item.orderItemIds[0], // Use first orderItemId as identifier
       menuItemId: item.menuItemId,
-      name: item.menuItem.name,
-      price: item.unitPrice,
+      name: item.name,
+      price: item.price,
       quantity: item.quantity,
       totalPrice: item.totalPrice,
-      image: item.menuItem.image,
+      image: item.image,
+      orderItemIds: item.orderItemIds // Include all orderItemIds for partial payment
     }));
 
     return NextResponse.json({

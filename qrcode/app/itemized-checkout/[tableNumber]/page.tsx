@@ -13,6 +13,7 @@ interface CartItem {
   quantity: number;
   totalPrice: number;
   image?: string | null;
+  orderItemIds: string[]; // Array of all OrderItem IDs for this menu item
 }
 
 export default function ItemizedCheckoutPage() {
@@ -106,18 +107,25 @@ export default function ItemizedCheckoutPage() {
 
     try {
       // Collect orderItemIds based on selected quantities
-      // If item has quantity 4 and user selected 2, we need to mark 2 of them as paid
-      // Since each OrderItem already has quantity stored, we just need to collect the orderItemId and quantity
-      const selectedItems = availableItems
-        .filter(item => (selectedQuantities[item.orderItemId] || 0) > 0)
-        .map(item => ({
-          orderItemId: item.orderItemId,
-          selectedQuantity: selectedQuantities[item.orderItemId]
-        }));
+      // If item has 4 orderItems and user selected 2, take first 2 orderItemIds from the array
+      const orderItemIds: string[] = [];
 
-      // For partial payment with quantities, we need to handle this differently
-      // We'll pass the orderItemIds and quantities to the payment page
-      sessionStorage.setItem('partialPaymentItems', JSON.stringify(selectedItems));
+      availableItems.forEach(item => {
+        const selectedQty = selectedQuantities[item.orderItemId] || 0;
+        if (selectedQty > 0) {
+          // Take the first N orderItemIds from the array where N = selectedQty
+          const idsToAdd = item.orderItemIds.slice(0, selectedQty);
+          orderItemIds.push(...idsToAdd);
+        }
+      });
+
+      if (orderItemIds.length === 0) {
+        alert('Please select at least one item to pay for');
+        return;
+      }
+
+      // Store data for payment page
+      sessionStorage.setItem('partialPaymentItemIds', JSON.stringify(orderItemIds));
       sessionStorage.setItem('partialPaymentAmount', JSON.stringify({
         subtotal,
         tax,
