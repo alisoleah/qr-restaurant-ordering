@@ -74,11 +74,6 @@ export default function CheckoutPage() {
   };
 
   const handleFullPayment = async () => {
-    if (!email) {
-      alert('Please enter your email address');
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
@@ -93,7 +88,7 @@ export default function CheckoutPage() {
         tipType: tipType === 'none' ? null : tipType,
         tipPercentage: tipType === 'percentage' ? tipPercentage : null,
         total,
-        customerEmail: email,
+        customerEmail: email || null,
         paymentMethod
       };
 
@@ -111,37 +106,12 @@ export default function CheckoutPage() {
 
       const order = await response.json();
 
-      // Process payment
-      const paymentResponse = await fetch('/api/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: order.id,
-          amount: total,
-          paymentMethod,
-          customerEmail: email,
-          provider: 'mock'  // Default to mock payment for full payment checkout
-        }),
-      });
-
-      if (!paymentResponse.ok) {
-        throw new Error('Payment failed');
-      }
-
-      const paymentResult = await paymentResponse.json();
-
-      if (paymentResult.success) {
-        // Clear cart and redirect to receipt
-        dispatch({ type: 'CLEAR_ORDER' });
-        router.push(`/receipt/${order.id}`);
-      } else {
-        throw new Error(paymentResult.error || 'Payment failed');
-      }
+      // Clear cart and redirect to payment page
+      dispatch({ type: 'CLEAR_ORDER' });
+      router.push(`/payment/${order.id}`);
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
+      console.error('Order creation error:', error);
+      alert('Failed to create order. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -189,25 +159,49 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleItemizedSplit = () => {
-    // Simply close the modal and redirect to itemized selection page
+  const handleItemizedSplit = async () => {
     setShowSplitModal(false);
+    setIsProcessing(true);
 
-    // Transform cart items to match ItemizedSelection component's expected format
-    const transformedItems = state.items.map(item => ({
-      menuItemId: item.menuItem.id,
-      name: item.menuItem.name,
-      price: item.menuItem.price,
-      quantity: item.quantity,
-      image: item.menuItem.image
-    }));
+    try {
+      // Create order first, so items are in the database for itemized checkout to fetch
+      const orderData = {
+        tableNumber,
+        items: state.items,
+        subtotal,
+        tax,
+        serviceCharge,
+        tip: tipAmount,
+        tipType: tipType === 'none' ? null : tipType,
+        tipPercentage: tipType === 'percentage' ? tipPercentage : null,
+        total,
+        customerEmail: email || null,
+        paymentMethod
+      };
 
-    // Store the items in sessionStorage and redirect
-    sessionStorage.setItem('itemizedSplitItems', JSON.stringify(transformedItems));
-    sessionStorage.setItem('itemizedSplitTable', tableNumber);
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
 
-    // Redirect to itemized selection page
-    router.push(`/itemized-checkout/${tableNumber}`);
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const order = await response.json();
+
+      // Clear cart and redirect to itemized selection page
+      dispatch({ type: 'CLEAR_ORDER' });
+      router.push(`/itemized-checkout/${tableNumber}`);
+    } catch (error) {
+      console.error('Order creation error:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (state.items.length === 0) {
@@ -433,15 +427,14 @@ export default function CheckoutPage() {
                 {/* Email Input */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address (for receipt)
+                    Email Address (optional - for receipt)
                   </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="your@email.com"
-                    required
+                    placeholder="your@email.com (optional)"
                   />
                 </div>
 
