@@ -20,13 +20,22 @@ export async function GET(
       );
     }
 
-    // Get all paid order items for this table
+    // Get paid items for current session (today only, exclude completed orders)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const paidItems = await db.orderItem.findMany({
       where: {
         order: {
-          tableId: table.id
+          tableId: table.id,
+          paymentStatus: {
+            not: 'CANCELLED' // Exclude cancelled orders
+          }
         },
-        isPaid: true
+        isPaid: true,
+        paidAt: {
+          gte: today // Only items paid today
+        }
       },
       include: {
         menuItem: true,

@@ -49,6 +49,23 @@ export default function TablePage() {
   useEffect(() => {
     fetchTableData();
     loadUnpaidItems();
+
+    // Reload unpaid items when page becomes visible (user returns from payment)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadUnpaidItems();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also reload when window regains focus
+    window.addEventListener('focus', loadUnpaidItems);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', loadUnpaidItems);
+    };
   }, [tableNumber]);
 
   const loadUnpaidItems = async () => {
