@@ -82,10 +82,15 @@ export async function GET(
       orderItemIds: item.orderItemIds // Include all orderItemIds for partial payment
     }));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       items,
       tableNumber,
     });
+
+    // Disable caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+
+    return response;
   } catch (error) {
     console.error('Error fetching unpaid items:', error);
     return NextResponse.json(
