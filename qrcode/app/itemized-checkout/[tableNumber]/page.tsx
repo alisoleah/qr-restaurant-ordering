@@ -49,7 +49,9 @@ export default function ItemizedCheckoutPage() {
 
   const fetchUnpaidItems = async () => {
     try {
-      const response = await fetch(`/api/tables/${tableNumber}/unpaid-items`, {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/tables/${tableNumber}/unpaid-items?t=${timestamp}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache'
