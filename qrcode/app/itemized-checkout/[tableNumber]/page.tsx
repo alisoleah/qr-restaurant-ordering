@@ -28,6 +28,23 @@ export default function ItemizedCheckoutPage() {
   useEffect(() => {
     fetchUnpaidItems();
     fetchRestaurantData();
+
+    // Reload unpaid items when page becomes visible (user returns from payment)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchUnpaidItems();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also reload when window regains focus
+    window.addEventListener('focus', fetchUnpaidItems);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchUnpaidItems);
+    };
   }, [tableNumber]);
 
   const fetchUnpaidItems = async () => {
