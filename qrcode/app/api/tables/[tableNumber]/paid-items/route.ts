@@ -29,7 +29,7 @@ export async function GET(
         order: {
           tableId: table.id,
           paymentStatus: {
-            not: 'CANCELLED' // Exclude cancelled orders
+            not: 'FAILED' // Exclude failed orders
           }
         },
         isPaid: true,
