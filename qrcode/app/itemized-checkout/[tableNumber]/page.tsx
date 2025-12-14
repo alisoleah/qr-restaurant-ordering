@@ -245,6 +245,7 @@ export default function ItemizedCheckoutPage() {
                   <div className="flex flex-col items-end space-y-2">
                     <label className="text-sm font-medium text-gray-700">Pay for:</label>
                     <select
+                      key={`${item.orderItemId}-${item.quantity}`}
                       value={selectedQty}
                       onChange={(e) => handleQuantityChange(item.orderItemId, parseInt(e.target.value))}
                       className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none min-w-[100px]"
