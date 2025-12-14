@@ -18,6 +18,11 @@ export interface OrderItem {
 export interface Order {
   id: string;
   tableNumber: string;
+  table?: {
+    number: string;
+    capacity: number;
+    status: string;
+  };
   items: OrderItem[];
   subtotal: number;
   tax: number;
