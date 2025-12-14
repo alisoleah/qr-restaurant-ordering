@@ -53,13 +53,17 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         paymentStatus: 'PENDING',
         items: {
-          create: items.map((item: any) => ({
-            menuItemId: item.menuItem?.id || item.menuItemId,
-            quantity: item.quantity,
-            unitPrice: item.menuItem?.price || item.unitPrice,
-            totalPrice: item.menuItem?.price ? item.menuItem.price * item.quantity : item.totalPrice,
-            notes: item.notes || null,
-          })),
+          create: items.flatMap((item: any) => {
+            // Split items into individual OrderItems with quantity=1 for partial payment support
+            const unitPrice = item.menuItem?.price || item.unitPrice;
+            return Array.from({ length: item.quantity }, () => ({
+              menuItemId: item.menuItem?.id || item.menuItemId,
+              quantity: 1,
+              unitPrice: unitPrice,
+              totalPrice: unitPrice,
+              notes: item.notes || null,
+            }));
+          }),
         },
       },
       include: {

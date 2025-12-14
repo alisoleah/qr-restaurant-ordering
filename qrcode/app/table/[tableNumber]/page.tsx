@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Star, Clock, Users } from 'lucide-react';
 import MenuSection from '../../../components/MenuSection';
 import CartSummary from '../../../components/CartSummary';
+import { useOrder } from '../../../context/OrderContext';
 
 interface MenuItem {
   id: string;
@@ -36,6 +37,7 @@ interface Table {
 export default function TablePage() {
   const params = useParams();
   const tableNumber = params.tableNumber as string;
+  const { dispatch } = useOrder();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [table, setTable] = useState<Table | null>(null);
@@ -46,12 +48,46 @@ export default function TablePage() {
 
   useEffect(() => {
     fetchTableData();
+    loadUnpaidItems();
   }, [tableNumber]);
+
+  const loadUnpaidItems = async () => {
+    try {
+      // First, clear the cart
+      dispatch({ type: 'CLEAR_ORDER' });
+      dispatch({ type: 'SET_TABLE', payload: tableNumber });
+
+      // Fetch unpaid items for this table
+      const response = await fetch(`/api/tables/${tableNumber}/unpaid-items`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.items && data.items.length > 0) {
+          // Convert unpaid items to OrderItem format
+          const orderItems = data.items.map((item: any) => ({
+            id: item.orderItemId,
+            menuItem: {
+              id: item.menuItemId,
+              name: item.name,
+              price: item.price,
+              image: item.image
+            },
+            quantity: item.quantity,
+            notes: ''
+          }));
+
+          // Load items into cart (replaces existing items)
+          dispatch({ type: 'LOAD_ITEMS', payload: orderItems });
+        }
+      }
+    } catch (err) {
+      console.error('Error loading unpaid items:', err);
+    }
+  };
 
   const fetchTableData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch table info and menu items
       const [tableResponse, menuResponse] = await Promise.all([
         fetch(`/api/tables/${tableNumber}`),

@@ -9,13 +9,14 @@ interface OrderState {
   customerEmail: string;
 }
 
-type OrderAction = 
+type OrderAction =
   | { type: 'ADD_ITEM'; payload: { menuItem: MenuItem; quantity: number; notes?: string } }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_ORDER' }
   | { type: 'SET_TABLE'; payload: string }
-  | { type: 'SET_EMAIL'; payload: string };
+  | { type: 'SET_EMAIL'; payload: string }
+  | { type: 'LOAD_ITEMS'; payload: OrderItem[] };
 
 const initialState: OrderState = {
   items: [],
@@ -82,7 +83,13 @@ function orderReducer(state: OrderState, action: OrderAction): OrderState {
         ...state,
         customerEmail: action.payload
       };
-      
+
+    case 'LOAD_ITEMS':
+      return {
+        ...state,
+        items: action.payload
+      };
+
     default:
       return state;
   }

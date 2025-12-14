@@ -8,9 +8,9 @@ type PaymentProvider = 'paymob' | 'stripe' | 'paypal' | 'mock';
 
 export async function POST(request: NextRequest) {
   try {
-    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone, cardDetails, itemIds } = await request.json();
+    const { orderId, amount, paymentMethod, customerEmail, provider, customerName, customerPhone, cardDetails, itemIds, tip, tipType, tipPercentage } = await request.json();
 
-    console.log('Payment request:', { orderId, amount, paymentMethod, provider, hasCardDetails: !!cardDetails, itemIds });
+    console.log('Payment request:', { orderId, amount, paymentMethod, provider, hasCardDetails: !!cardDetails, itemIds, tip });
 
     // Determine which payment provider to use
     const paymentProvider: PaymentProvider = provider || 'mock';
@@ -75,13 +75,58 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // Check if there are any unpaid items remaining for the related orders
-      const firstItem = await db.orderItem.findFirst({
-        where: { id: itemIds[0] },
-        include: { order: true }
+      // Get the paid items to calculate totals for the partial payment order
+      const paidItems = await db.orderItem.findMany({
+        where: { id: { in: itemIds } },
+        include: {
+          menuItem: true,
+          order: {
+            include: {
+              table: true,
+              restaurant: true
+            }
+          }
+        }
       });
 
-      if (firstItem) {
+      if (paidItems.length > 0) {
+        const firstItem = paidItems[0];
+        const subtotal = paidItems.reduce((sum, item) => sum + item.totalPrice, 0);
+        const taxRate = firstItem.order.restaurant.taxRate;
+        const serviceChargeRate = firstItem.order.restaurant.serviceChargeRate;
+        const tax = subtotal * taxRate;
+        const serviceCharge = subtotal * serviceChargeRate;
+        const tipAmount = tip || 0;
+        const total = subtotal + tax + serviceCharge + tipAmount;
+
+        // Create a new order record for this partial payment
+        const partialOrder = await db.order.create({
+          data: {
+            orderNumber: `PARTIAL-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            tableId: firstItem.order.tableId,
+            restaurantId: firstItem.order.restaurantId,
+            customerEmail,
+            subtotal,
+            tax,
+            serviceCharge,
+            tip: tipAmount,
+            tipType: tipType ? (tipType.toUpperCase() as any) : null,
+            tipPercentage,
+            total,
+            paymentMethod: paymentMethod ? (paymentMethod.toUpperCase() as any) : 'CARD',
+            status: 'CONFIRMED',
+            paymentStatus: 'COMPLETED'
+          },
+          include: {
+            table: true,
+            restaurant: true
+          }
+        });
+
+        // Return the new order ID for receipt page
+        const newOrderId = partialOrder.id;
+
+        // Check if there are any unpaid items remaining for the table
         const unpaidItemsCount = await db.orderItem.count({
           where: {
             order: {
@@ -114,6 +159,13 @@ export async function POST(request: NextRequest) {
 
           console.log('All items paid - table marked as available');
         }
+
+        return NextResponse.json({
+          success: true,
+          orderId: newOrderId,  // Return the new partial order ID
+          message: 'Partial payment successful',
+          ...paymentResult,
+        });
       }
     } else {
       // Full order payment - original behavior

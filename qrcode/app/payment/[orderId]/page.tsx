@@ -26,6 +26,11 @@ export default function PaymentPage() {
   const [cardCVC, setCardCVC] = useState('');
   const [cardName, setCardName] = useState('');
 
+  // Tip state
+  const [tipType, setTipType] = useState<'percentage' | 'custom' | 'none'>('none');
+  const [tipPercentage, setTipPercentage] = useState<number>(0);
+  const [customTipAmount, setCustomTipAmount] = useState<string>('');
+
   useEffect(() => {
     // Check if this is a partial payment
     if (orderId.startsWith('partial-')) {
@@ -75,6 +80,40 @@ export default function PaymentPage() {
     }
   };
 
+  // Calculate tip amount
+  const calculateTip = () => {
+    if (tipType === 'percentage') {
+      return order.subtotal * (tipPercentage / 100);
+    } else if (tipType === 'custom') {
+      return parseFloat(customTipAmount) || 0;
+    }
+    return 0;
+  };
+
+  // Calculate total with tip
+  const calculateTotalWithTip = () => {
+    const tipAmount = calculateTip();
+    return order.total + tipAmount;
+  };
+
+  const handleTipPercentage = (percentage: number) => {
+    setTipType('percentage');
+    setTipPercentage(percentage);
+    setCustomTipAmount('');
+  };
+
+  const handleCustomTip = (amount: string) => {
+    setTipType('custom');
+    setCustomTipAmount(amount);
+    setTipPercentage(0);
+  };
+
+  const handleNoTip = () => {
+    setTipType('none');
+    setTipPercentage(0);
+    setCustomTipAmount('');
+  };
+
   const handlePayment = async () => {
     // Email is now optional
 
@@ -95,6 +134,9 @@ export default function PaymentPage() {
     setIsProcessing(true);
 
     try {
+      const tipAmount = calculateTip();
+      const totalWithTip = calculateTotalWithTip();
+
       // Process payment
       const paymentResponse = await fetch('/api/payment', {
         method: 'POST',
@@ -103,11 +145,14 @@ export default function PaymentPage() {
         },
         body: JSON.stringify({
           orderId: order.id,
-          amount: order.total,
+          amount: totalWithTip,
           paymentMethod,
           customerEmail: email,
           provider: provider,
           itemIds: isPartialPayment ? partialPaymentItemIds : undefined,
+          tip: tipAmount,
+          tipType: tipType !== 'none' ? tipType : null,
+          tipPercentage: tipType === 'percentage' ? tipPercentage : null,
           cardDetails: provider === 'mock' && paymentMethod === 'card' ? {
             number: cardNumber.replace(/\s/g, ''),
             expiry: cardExpiry,
@@ -124,23 +169,22 @@ export default function PaymentPage() {
       const paymentResult = await paymentResponse.json();
 
       if (paymentResult.success) {
-        // Clear partial payment session storage
-        if (isPartialPayment) {
-          sessionStorage.removeItem('partialPaymentItemIds');
-          sessionStorage.removeItem('partialPaymentAmount');
-          sessionStorage.removeItem('partialPaymentTable');
-        }
-
         // Check if PayPal requires redirect
         if (paymentResult.redirectRequired && paymentResult.approvalUrl) {
           // Redirect to PayPal for payment approval
           window.location.href = paymentResult.approvalUrl;
         } else if (isPartialPayment) {
-          // For partial payments, redirect back to itemized checkout to see remaining items
-          const tableNumber = order.tableNumber || order.id.replace('partial-', '');
-          alert('Payment successful! Redirecting to see remaining items.');
-          router.push(`/itemized-checkout/${tableNumber}`);
+          // For partial payments, use the orderId returned from payment API
+          // (which is the newly created partial payment order)
+          const receiptOrderId = paymentResult.orderId || order.id;
+          // Keep sessionStorage for receipt page (will be cleared by receipt page after reading)
+          router.push(`/receipt/${receiptOrderId}`);
         } else {
+          // Clear any partial payment data for full payments
+          sessionStorage.removeItem('partialPaymentItemIds');
+          sessionStorage.removeItem('partialPaymentAmount');
+          sessionStorage.removeItem('partialPaymentTable');
+
           // Redirect to receipt for full order payments
           router.push(`/receipt/${order.id}`);
         }
@@ -222,15 +266,15 @@ export default function PaymentPage() {
                   <span>Service Charge</span>
                   <span>EGP {order.serviceCharge.toFixed(2)}</span>
                 </div>
-                {order.tip > 0 && (
+                {calculateTip() > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Tip</span>
-                    <span>EGP {order.tip.toFixed(2)}</span>
+                    <span>EGP {calculateTip().toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>EGP {order.total.toFixed(2)}</span>
+                  <span>EGP {calculateTotalWithTip().toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -253,6 +297,85 @@ export default function PaymentPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="your@email.com (optional)"
                 />
+              </div>
+
+              {/* Tip Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Add a Tip (Optional)
+                </label>
+
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  <button
+                    onClick={() => handleTipPercentage(5)}
+                    className={`px-4 py-3 rounded-lg font-medium transition ${
+                      tipType === 'percentage' && tipPercentage === 5
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    5%
+                  </button>
+                  <button
+                    onClick={() => handleTipPercentage(10)}
+                    className={`px-4 py-3 rounded-lg font-medium transition ${
+                      tipType === 'percentage' && tipPercentage === 10
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    10%
+                  </button>
+                  <button
+                    onClick={() => handleTipPercentage(15)}
+                    className={`px-4 py-3 rounded-lg font-medium transition ${
+                      tipType === 'percentage' && tipPercentage === 15
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    15%
+                  </button>
+                  <button
+                    onClick={() => handleTipPercentage(20)}
+                    className={`px-4 py-3 rounded-lg font-medium transition ${
+                      tipType === 'percentage' && tipPercentage === 20
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    20%
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex space-x-2">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={customTipAmount}
+                      onChange={(e) => handleCustomTip(e.target.value)}
+                      placeholder="Custom amount"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                    <button
+                      onClick={handleNoTip}
+                      className={`px-6 py-3 rounded-lg font-medium transition ${
+                        tipType === 'none'
+                          ? 'bg-gray-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      No Tip
+                    </button>
+                  </div>
+                  {calculateTip() > 0 && (
+                    <p className="text-sm text-green-600 font-medium">
+                      Tip amount: EGP {calculateTip().toFixed(2)}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Payment Provider Selection */}
@@ -466,7 +589,7 @@ export default function PaymentPage() {
                 ) : (
                   <>
                     <CheckCircle className="h-5 w-5" />
-                    <span>Pay EGP {order.total.toFixed(2)}</span>
+                    <span>Pay EGP {calculateTotalWithTip().toFixed(2)}</span>
                   </>
                 )}
               </button>

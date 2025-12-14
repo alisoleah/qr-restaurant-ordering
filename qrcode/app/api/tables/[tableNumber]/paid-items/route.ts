@@ -20,24 +20,24 @@ export async function GET(
       );
     }
 
-    // Get all unpaid order items for this table
-    const unpaidItems = await db.orderItem.findMany({
+    // Get all paid order items for this table
+    const paidItems = await db.orderItem.findMany({
       where: {
         order: {
-          tableId: table.id,
-          paymentStatus: {
-            not: 'COMPLETED'
-          }
+          tableId: table.id
         },
-        isPaid: false
+        isPaid: true
       },
       include: {
         menuItem: true,
         order: true
+      },
+      orderBy: {
+        paidAt: 'desc'
       }
     });
 
-    console.log(`[Unpaid Items API] Table ${tableNumber} (ID: ${table.id}) - Found ${unpaidItems.length} unpaid items`);
+    console.log(`[Paid Items API] Table ${tableNumber} (ID: ${table.id}) - Found ${paidItems.length} paid items`);
 
     // Aggregate items by menuItemId to group same items together
     const aggregatedMap = new Map<string, {
@@ -47,16 +47,15 @@ export async function GET(
       quantity: number;
       totalPrice: number;
       image: string | null;
-      orderItemIds: string[];
+      paidAt: Date | null;
     }>();
 
-    unpaidItems.forEach(item => {
+    paidItems.forEach(item => {
       const existing = aggregatedMap.get(item.menuItemId);
       if (existing) {
         // Add to existing group
         existing.quantity += item.quantity;
         existing.totalPrice += item.totalPrice;
-        existing.orderItemIds.push(item.id);
       } else {
         // Create new group
         aggregatedMap.set(item.menuItemId, {
@@ -66,30 +65,33 @@ export async function GET(
           quantity: item.quantity,
           totalPrice: item.totalPrice,
           image: item.menuItem.image,
-          orderItemIds: [item.id]
+          paidAt: item.paidAt
         });
       }
     });
 
     const items = Array.from(aggregatedMap.values()).map(item => ({
-      orderItemId: item.orderItemIds[0], // Use first orderItemId as identifier
       menuItemId: item.menuItemId,
       name: item.name,
       price: item.price,
       quantity: item.quantity,
       totalPrice: item.totalPrice,
       image: item.image,
-      orderItemIds: item.orderItemIds // Include all orderItemIds for partial payment
+      paidAt: item.paidAt
     }));
+
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
     return NextResponse.json({
       items,
       tableNumber,
+      subtotal
     });
   } catch (error) {
-    console.error('Error fetching unpaid items:', error);
+    console.error('Error fetching paid items:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch unpaid items' },
+      { error: 'Failed to fetch paid items' },
       { status: 500 }
     );
   }

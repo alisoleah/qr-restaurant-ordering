@@ -85,9 +85,43 @@ export default function CheckoutPage() {
 
   const handleEqualSplit = async (numPeople: number) => {
     try {
+      if (!tableData?.table?.id) {
+        alert('Table data not loaded yet. Please try again.');
+        return;
+      }
+
       setIsProcessing(true);
 
-      // First create the bill split session
+      // First create an order
+      const orderData = {
+        tableNumber,
+        items: state.items,
+        subtotal,
+        tax,
+        serviceCharge,
+        tip: 0,
+        tipType: null,
+        tipPercentage: null,
+        total,
+        customerEmail: null,
+        paymentMethod: 'CARD'
+      };
+
+      const orderResponse = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const order = await orderResponse.json();
+
+      // Then create the bill split session
       const response = await fetch(`/api/bill-split/${tableData.table.id}`, {
         method: 'POST',
         headers: {
@@ -95,6 +129,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           totalPeople: numPeople,
+          orderId: order.id,
           orderData: {
             items: state.items,
             subtotal,
@@ -113,6 +148,9 @@ export default function CheckoutPage() {
       }
 
       const billSplit = await response.json();
+
+      // Clear cart
+      dispatch({ type: 'CLEAR_ORDER' });
 
       // Redirect to QR codes display page
       router.push(`/bill-split/${tableData.table.id}`);
