@@ -49,7 +49,12 @@ export default function ItemizedCheckoutPage() {
 
   const fetchUnpaidItems = async () => {
     try {
-      const response = await fetch(`/api/tables/${tableNumber}/unpaid-items`);
+      const response = await fetch(`/api/tables/${tableNumber}/unpaid-items`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.items && data.items.length > 0) {
