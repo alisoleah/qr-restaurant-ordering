@@ -38,6 +38,7 @@ export async function GET(
     });
 
     console.log(`[Unpaid Items API] Table ${tableNumber} (ID: ${table.id}) - Found ${unpaidItems.length} unpaid items`);
+    console.log('[Unpaid Items API] Raw unpaid items:', unpaidItems.map(i => ({ id: i.id, menuItemId: i.menuItemId, quantity: i.quantity, isPaid: i.isPaid })));
 
     // Aggregate items by menuItemId to group same items together
     const aggregatedMap = new Map<string, {
@@ -81,6 +82,8 @@ export async function GET(
       image: item.image,
       orderItemIds: item.orderItemIds // Include all orderItemIds for partial payment
     }));
+
+    console.log('[Unpaid Items API] Aggregated items:', items.map(i => ({ name: i.name, quantity: i.quantity, orderItemIds: i.orderItemIds })));
 
     const response = NextResponse.json({
       items,
