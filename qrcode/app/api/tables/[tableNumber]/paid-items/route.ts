@@ -20,22 +20,34 @@ export async function GET(
       );
     }
 
-    // Get paid items for current session (today only, exclude completed orders)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get all order items for this table (current session)
+    // We'll get orders that have at least one unpaid item (active session)
+    const activeOrders = await db.order.findMany({
+      where: {
+        tableId: table.id,
+        paymentStatus: {
+          not: 'FAILED'
+        },
+        items: {
+          some: {
+            isPaid: false // Orders with unpaid items = current session
+          }
+        }
+      },
+      select: {
+        id: true
+      }
+    });
 
+    const activeOrderIds = activeOrders.map(order => order.id);
+
+    // Get paid items only from active orders (current session)
     const paidItems = await db.orderItem.findMany({
       where: {
-        order: {
-          tableId: table.id,
-          paymentStatus: {
-            not: 'FAILED' // Exclude failed orders
-          }
+        orderId: {
+          in: activeOrderIds
         },
-        isPaid: true,
-        paidAt: {
-          gte: today // Only items paid today
-        }
+        isPaid: true
       },
       include: {
         menuItem: true,
