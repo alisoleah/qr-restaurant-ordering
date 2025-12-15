@@ -228,3 +228,13 @@ enum TipType {
   PERCENTAGE
   FIXED_AMOUNT
 }
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // bcrypt hashed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admin_users")
+}
