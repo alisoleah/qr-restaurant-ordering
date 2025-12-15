@@ -43,6 +43,18 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
+      // Check if items already have an ID (meaning they're unpaid items from database)
+      const hasExistingItems = state.items.some(item => item.id && item.id.startsWith('cmj'));
+
+      if (hasExistingItems) {
+        // Items already exist in database, redirect directly to itemized checkout
+        // User should pay for these items from there instead
+        console.log('Items already exist in database, redirecting to itemized checkout');
+        router.push(`/itemized-checkout/${tableNumber}`);
+        setIsProcessing(false);
+        return;
+      }
+
       // Create order
       const orderData = {
         tableNumber,
@@ -91,6 +103,18 @@ export default function CheckoutPage() {
       }
 
       setIsProcessing(true);
+
+      // Check if items already have an ID (meaning they're unpaid items from database)
+      const hasExistingItems = state.items.some(item => item.id && item.id.startsWith('cmj'));
+
+      if (hasExistingItems) {
+        // Items already exist in database, redirect to itemized checkout instead
+        console.log('Items already exist in database, redirecting to itemized checkout for equal split');
+        router.push(`/itemized-checkout/${tableNumber}`);
+        setIsProcessing(false);
+        setShowSplitModal(false);
+        return;
+      }
 
       // First create an order
       const orderData = {
@@ -168,6 +192,17 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
+      // Check if items already have an ID (meaning they're unpaid items from database)
+      const hasExistingItems = state.items.some(item => item.id && item.id.startsWith('cmj'));
+
+      if (hasExistingItems) {
+        // Items already exist in database, skip creating order and go directly to itemized checkout
+        console.log('Items already exist in database, skipping order creation');
+        router.push(`/itemized-checkout/${tableNumber}`);
+        setIsProcessing(false);
+        return;
+      }
+
       // Create order first, so items are in the database for itemized checkout to fetch
       const orderData = {
         tableNumber,
