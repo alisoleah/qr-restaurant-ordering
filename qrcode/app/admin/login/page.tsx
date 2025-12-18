@@ -2,7 +2,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User } from 'lucide-react';
+import { User } from 'lucide-react';
+import Image from 'next/image';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -48,8 +49,14 @@ export default function AdminLoginPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-white" />
+            <div className="flex items-center justify-center mx-auto mb-4">
+              <Image
+                src="/logo2.png"
+                alt="Restaurant Logo"
+                width={120}
+                height={120}
+                className="object-contain"
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
             <p className="text-gray-600">Sign in to access the admin dashboard</p>
