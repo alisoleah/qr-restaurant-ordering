@@ -38,9 +38,13 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
           {/* Logo/Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">QR</span>
-              </div>
+              <img
+                src="/logo2.png"
+                alt="Restaurant Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
               <span className="font-semibold text-lg text-gray-900 hidden sm:block">Restaurant</span>
             </Link>
           </div>
