@@ -11,7 +11,13 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <ChefHat className="h-8 w-8 text-blue-600" />
+              <img
+                src="/logo2.png"
+                alt="Restaurant Logo"
+                width={50}
+                height={50}
+                className="object-contain"
+              />
               <h1 className="text-2xl font-bold text-gray-900">QR Restaurant</h1>
             </div>
             <nav className="space-x-6">
