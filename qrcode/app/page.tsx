@@ -14,8 +14,8 @@ export default function HomePage() {
               <img
                 src="/logo2.png"
                 alt="Restaurant Logo"
-                width={50}
-                height={50}
+                width={80}
+                height={80}
                 className="object-contain"
               />
               <h1 className="text-2xl font-bold text-gray-900">QR Restaurant</h1>

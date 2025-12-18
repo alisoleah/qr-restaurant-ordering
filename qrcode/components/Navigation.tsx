@@ -41,8 +41,8 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
               <img
                 src="/logo2.png"
                 alt="Restaurant Logo"
-                width={50}
-                height={50}
+                width={80}
+                height={80}
                 className="object-contain"
               />
               <span className="font-semibold text-lg text-gray-900 hidden sm:block">Restaurant</span>
