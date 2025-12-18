@@ -2,8 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { User } from 'lucide-react';
-import Image from 'next/image';
+import { User, Lock } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -50,7 +49,7 @@ export default function AdminLoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mx-auto mb-4">
-              <Image
+              <img
                 src="/logo2.png"
                 alt="Restaurant Logo"
                 width={120}
