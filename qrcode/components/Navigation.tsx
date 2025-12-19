@@ -32,7 +32,7 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50" style={{ borderBottom: '1px solid #e5e7eb' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
@@ -45,7 +45,7 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
                 height={80}
                 className="object-contain"
               />
-              <span className="font-semibold text-lg text-gray-900 hidden sm:block">Restaurant</span>
+              <span className="font-semibold text-lg hidden sm:block" style={{ color: '#2E3A45' }}>Restaurant</span>
             </Link>
           </div>
 
@@ -53,11 +53,20 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
           <div className="flex items-center space-x-4">
             <Link
               href="/"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                currentPage === 'home'
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg transition"
+              style={currentPage === 'home'
+                ? { backgroundColor: 'rgba(0, 194, 203, 0.1)', color: '#00C2CB' }
+                : { color: '#2E3A45' }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 'home') {
+                  e.currentTarget.style.backgroundColor = '#F8F9FA';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== 'home') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
             >
               <Home className="w-5 h-5" />
               <span className="hidden sm:inline">Home</span>
@@ -65,11 +74,20 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
 
             <Link
               href="/admin"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                currentPage === 'admin'
-                  ? 'bg-purple-50 text-purple-600'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg transition"
+              style={currentPage === 'admin'
+                ? { backgroundColor: 'rgba(0, 194, 203, 0.1)', color: '#00C2CB' }
+                : { color: '#2E3A45' }}
+              onMouseEnter={(e) => {
+                if (currentPage !== 'admin') {
+                  e.currentTarget.style.backgroundColor = '#F8F9FA';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== 'admin') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
             >
               <ShieldCheck className="w-5 h-5" />
               <span className="hidden sm:inline">Admin</span>
@@ -80,7 +98,20 @@ export default function Navigation({ currentPage = 'other' }: NavigationProps) {
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg transition text-gray-700 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ color: '#2E3A45' }}
+                onMouseEnter={(e) => {
+                  if (!isLoggingOut) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+                    e.currentTarget.style.color = '#FF6B6B';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoggingOut) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#2E3A45';
+                  }
+                }}
               >
                 <LogOut className="w-5 h-5" />
                 <span className="hidden sm:inline">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>

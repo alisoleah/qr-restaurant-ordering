@@ -2,26 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-teal: #00C2CB;
+  --color-coral: #FF6B6B;
+  --color-slate: #2E3A45;
+  --color-white: #FFFFFF;
+  --color-off-white: #F8F9FA;
+}
+
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    color: var(--color-slate);
+    background-color: var(--color-off-white);
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200;
+    @apply font-medium py-3 px-6 rounded-lg transition-colors duration-200;
+    background-color: var(--color-coral);
+    color: var(--color-white);
   }
-  
+
+  .btn-primary:hover {
+    background-color: #e65a5a;
+  }
+
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors duration-200;
+    @apply font-medium py-3 px-6 rounded-lg transition-colors duration-200;
+    background-color: var(--color-teal);
+    color: var(--color-white);
   }
-  
+
+  .btn-secondary:hover {
+    background-color: #00a8b0;
+  }
+
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply bg-white rounded-xl shadow-sm p-6;
+    border: 1px solid #e5e7eb;
   }
-  
+
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none;
+    @apply w-full px-4 py-3 border rounded-lg outline-none transition-colors duration-200;
+    border-color: #d1d5db;
+    color: var(--color-slate);
+  }
+
+  .input-field:focus {
+    border-color: var(--color-teal);
+    box-shadow: 0 0 0 2px rgba(0, 194, 203, 0.2);
   }
 }
