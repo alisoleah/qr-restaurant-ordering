@@ -48,7 +48,7 @@ export default function LandingPage() {
 
         <section id="features" className={styles.features}>
           <div className={styles.container}>
-            <h2>Why Splytro?</h2>
+            <h2 className={styles.sectionTitle}>Why Splytro?</h2>
             <div className={styles.grid3}>
               <div className={styles.featureCard}>
                 <div className={`${styles.iconWrapper} ${styles.teal}`}>
@@ -77,7 +77,7 @@ export default function LandingPage() {
 
         <section className={styles.howItWorks}>
           <div className={styles.container}>
-            <h2>How It Works</h2>
+            <h2 className={styles.sectionTitle}>How It Works</h2>
             <div className={styles.grid3}>
               <div className={styles.stepCard}>
                 <h3>1. Scan Bill</h3>
