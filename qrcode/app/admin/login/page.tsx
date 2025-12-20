@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mx-auto mb-4">
               <img
-                src="/logo2.png"
+                src="/logo3.png"
                 alt="Restaurant Logo"
                 width={400}
                 height={400}
