@@ -18,8 +18,18 @@ async function verifyToken(token: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /admin/* routes, except /admin/login
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  // Protected routes that require authentication
+  const protectedRoutes = [
+    '/admin',
+    '/qr-generator',
+  ];
+
+  // Check if current path matches any protected route
+  const isProtected = protectedRoutes.some(route =>
+    pathname.startsWith(route) && pathname !== '/admin/login'
+  );
+
+  if (isProtected) {
     // Get the admin session cookie
     const token = request.cookies.get('admin-session')?.value;
 
@@ -53,5 +63,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/qr-generator/:path*',
   ],
 };
