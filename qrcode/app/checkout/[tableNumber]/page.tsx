@@ -6,7 +6,6 @@ import { ArrowLeft, Users, Wallet } from 'lucide-react';
 import { useOrder } from '../../../context/OrderContext';
 import { restaurant } from '../../../data/menu';
 import Link from 'next/link';
-import Navigation from '../../../components/Navigation';
 import SplitBillModal from '../../../components/SplitBillModal';
 
 export default function CheckoutPage() {
@@ -245,24 +244,19 @@ export default function CheckoutPage() {
 
   if (state.items.length === 0) {
     return (
-      <>
-        <Navigation currentPage="checkout" />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-16">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-            <Link href={`/table/${tableNumber}`} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
-              Back to Menu
-            </Link>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+          <Link href={`/table/${tableNumber}`} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+            Back to Menu
+          </Link>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <Navigation currentPage="checkout" />
-      <div className="min-h-screen bg-gray-50 pt-16">
+    <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -381,6 +375,5 @@ export default function CheckoutPage() {
           onItemizedSplit={handleItemizedSplit}
         />
       </div>
-    </>
   );
 }

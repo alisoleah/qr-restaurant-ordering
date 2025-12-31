@@ -115,7 +115,7 @@ export default function QRGeneratorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#F8F9FA' }}>
       <Navigation currentPage="other" />
 
       {/* Header */}
@@ -123,8 +123,8 @@ export default function QRGeneratorPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
-              <QrCode className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">QR Code Generator</h1>
+              <QrCode className="h-8 w-8" style={{ color: '#00C2CB' }} />
+              <h1 className="text-2xl font-bold" style={{ color: '#2E3A45' }}>QR Code Generator</h1>
             </div>
           </div>
         </div>
@@ -135,10 +135,10 @@ export default function QRGeneratorPage() {
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           {/* Single QR Code */}
           <div className="card">
-            <h2 className="text-xl font-bold mb-4">Generate Single QR Code</h2>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#2E3A45' }}>Generate Single QR Code</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: '#2E3A45' }}>
                   Table Number
                 </label>
                 <input
@@ -161,11 +161,11 @@ export default function QRGeneratorPage() {
 
           {/* Bulk QR Codes */}
           <div className="card">
-            <h2 className="text-xl font-bold mb-4">Generate Multiple QR Codes</h2>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#2E3A45' }}>Generate Multiple QR Codes</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#2E3A45' }}>
                     Start Table
                   </label>
                   <input
@@ -177,7 +177,7 @@ export default function QRGeneratorPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#2E3A45' }}>
                     End Table
                   </label>
                   <input
@@ -204,7 +204,7 @@ export default function QRGeneratorPage() {
         {qrCodes.length > 0 && (
           <div className="card">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Generated QR Codes</h2>
+              <h2 className="text-xl font-bold" style={{ color: '#2E3A45' }}>Generated QR Codes</h2>
               <div className="space-x-2">
                 <button
                   onClick={downloadAllQRCodes}
@@ -225,14 +225,14 @@ export default function QRGeneratorPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {qrCodes.map((qr) => (
-                <div key={qr.table} className="border rounded-lg p-4 text-center bg-gray-50">
-                  <h3 className="text-lg font-semibold mb-3">Table {qr.table}</h3>
+                <div key={qr.table} className="border rounded-lg p-4 text-center" style={{ backgroundColor: '#F8F9FA' }}>
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: '#2E3A45' }}>Table {qr.table}</h3>
                   <img
                     src={qr.qrData}
                     alt={`QR Code for Table ${qr.table}`}
                     className="mx-auto mb-3 border rounded"
                   />
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className="text-sm mb-3" style={{ color: '#6e7c8b' }}>
                     Scan to view menu and place order
                   </p>
                   <div className="space-y-2">
@@ -258,22 +258,22 @@ export default function QRGeneratorPage() {
 
         {/* Instructions */}
         <div className="card mt-8">
-          <h2 className="text-xl font-bold mb-4">How to Use</h2>
-          <div className="space-y-3 text-gray-700">
+          <h2 className="text-xl font-bold mb-4" style={{ color: '#2E3A45' }}>How to Use</h2>
+          <div className="space-y-3" style={{ color: '#2E3A45' }}>
             <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">1</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{ backgroundColor: 'rgba(0, 194, 203, 0.15)', color: '#00C2CB' }}>1</span>
               <p>Generate QR codes for your restaurant tables using the forms above.</p>
             </div>
             <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">2</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{ backgroundColor: 'rgba(0, 194, 203, 0.15)', color: '#00C2CB' }}>2</span>
               <p>Download the QR codes as PNG images or print them directly.</p>
             </div>
             <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">3</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{ backgroundColor: 'rgba(0, 194, 203, 0.15)', color: '#00C2CB' }}>3</span>
               <p>Place the printed QR codes on your restaurant tables.</p>
             </div>
             <div className="flex items-start space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">4</span>
+              <span className="px-2 py-1 rounded text-sm font-medium" style={{ backgroundColor: 'rgba(0, 194, 203, 0.15)', color: '#00C2CB' }}>4</span>
               <p>Customers scan the QR code to access the menu and place orders.</p>
             </div>
           </div>

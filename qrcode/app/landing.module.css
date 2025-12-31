@@ -1,0 +1,265 @@
+.body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: #F8F9FA;
+    color: #2E3A45;
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Decorative Background Shapes */
+.shape {
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+}
+
+.shapeLeft {
+    top: 50%;
+    left: -10%;
+    width: 400px;
+    height: 800px;
+    background-color: #FF6B6B;
+    opacity: 0.1;
+    transform: translateY(-50%);
+    border-radius: 0 50% 50% 0 / 0 50% 50% 0;
+}
+
+.shapeRight {
+    top: 60%;
+    right: -5%;
+    width: 300px;
+    height: 600px;
+    background-color: #00C2CB;
+    opacity: 0.1;
+    transform: translateY(-50%);
+    border-radius: 50% 0 0 50% / 50% 0 0 50%;
+}
+
+/* Header */
+.header {
+    padding: 20px 0;
+}
+
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logoLink {
+    display: block;
+}
+
+.logoImg {
+    height: 50px;
+    width: auto;
+    display: block;
+}
+
+.nav ul {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav a {
+    text-decoration: none;
+    color: #2E3A45;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav a:hover {
+    color: #00C2CB;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 28px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btnPrimary {
+    background-color: #FF6B6B;
+    color: #ffffff;
+}
+
+.btnPrimary:hover {
+    background-color: #e65a5a;
+    transform: translateY(-2px);
+}
+
+.btnLarge {
+    padding: 16px 40px;
+    font-size: 18px;
+}
+
+/* Hero Section */
+.hero {
+    padding: 80px 0;
+}
+
+.heroContent {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.heroText {
+    flex: 1;
+}
+
+.heroText h1 {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 24px;
+}
+
+.heroText p {
+    font-size: 20px;
+    color: #6e7c8b;
+    margin-bottom: 36px;
+    max-width: 500px;
+}
+
+.heroImage {
+    flex: 1;
+}
+
+.heroImage img {
+    width: 100%;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+/* Sections General */
+.sectionTitle {
+    text-align: center;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 60px;
+}
+
+.grid3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    text-align: center;
+}
+
+/* Features Section */
+.features {
+    padding: 80px 0;
+}
+
+.iconWrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 24px;
+    font-size: 32px;
+}
+
+.iconWrapper.teal {
+    background-color: rgba(0, 194, 203, 0.15);
+    color: #00C2CB;
+}
+
+.iconWrapper.coral {
+    background-color: rgba(255, 107, 107, 0.15);
+    color: #FF6B6B;
+}
+
+.featureCard h3 {
+    font-size: 22px;
+    margin-bottom: 16px;
+}
+
+.featureCard p {
+    color: #6e7c8b;
+}
+
+/* How It Works Section */
+.howItWorks {
+    padding: 80px 0 120px;
+}
+
+.stepCard h3 {
+    font-size: 20px;
+    margin-bottom: 24px;
+    color: #2E3A45;
+}
+
+.stepIcon {
+    font-size: 48px;
+    color: #00C2CB;
+    opacity: 0.5;
+}
+
+/* Footer */
+.footer {
+    padding: 40px 0;
+    text-align: center;
+    background-color: #F8F9FA;
+}
+
+.footer .logoLink {
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.footer p {
+    color: #6e7c8b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .headerContent {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .nav ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .heroContent {
+        flex-direction: column;
+        text-align: center;
+        gap: 40px;
+    }
+
+    .heroText h1 {
+        font-size: 42px;
+    }
+
+    .heroText p {
+        margin: 0 auto 36px;
+    }
+
+    .grid3 {
+        grid-template-columns: 1fr;
+    }
+
+    .shape {
+        display: none;
+    }
+}

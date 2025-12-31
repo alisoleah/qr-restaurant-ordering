@@ -1,107 +1,113 @@
 'use client';
 
 import Link from 'next/link';
-import { QrCode, Users, ChefHat, CreditCard } from 'lucide-react';
+import styles from './landing.module.css';
 
-export default function HomePage() {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <ChefHat className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900">QR Restaurant</h1>
-            </div>
-            <nav className="space-x-6">
-              <Link href="/admin" className="text-gray-600 hover:text-blue-600">
-                Admin
-              </Link>
-              <Link href="/qr-generator" className="text-gray-600 hover:text-blue-600">
-                QR Generator
-              </Link>
-            </nav>
-          </div>
+    <div className={styles.body}>
+      <div className={`${styles.shape} ${styles.shapeLeft}`}></div>
+      <div className={`${styles.shape} ${styles.shapeRight}`}></div>
+
+      <header className={styles.header}>
+        <div className={`${styles.container} ${styles.headerContent}`}>
+          <Link href="/" className={styles.logoLink}>
+            <img src="/logo2.png" alt="Restaurant Logo" className={styles.logoImg} />
+          </Link>
+          <nav className={styles.nav}>
+            <ul>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#restaurants">For Restaurants</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+            </ul>
+          </nav>
+          <Link href="/demo" className={`${styles.btn} ${styles.btnPrimary}`}>
+            Get Started
+          </Link>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Scan, Order, Pay - It's That Simple
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Transform your restaurant experience with our contactless QR ordering system
-          </p>
-        </div>
+      <main>
+        <section className={styles.hero}>
+          <div className={`${styles.container} ${styles.heroContent}`}>
+            <div className={styles.heroText}>
+              <h1>Split Bills.<br />No Drama.</h1>
+              <p>Splytro makes splitting restaurant checks fast, fair, and hassle-free for everyone.</p>
+              <Link href="/demo" className={`${styles.btn} ${styles.btnLarge} ${styles.btnPrimary}`}>
+                Get Started for Free
+              </Link>
+            </div>
+            <div className={styles.heroImage}>
+              <img
+                src="https://images.unsplash.com/photo-1556742208-999815fca738?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                alt="Friends splitting bills with phones at a restaurant"
+              />
+            </div>
+          </div>
+        </section>
 
-        {/* Features */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          <div className="text-center">
-            <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <QrCode className="h-8 w-8 text-white" />
+        <section id="features" className={styles.features}>
+          <div className={styles.container}>
+            <h2 className={styles.sectionTitle}>Why Splytro?</h2>
+            <div className={styles.grid3}>
+              <div className={styles.featureCard}>
+                <div className={`${styles.iconWrapper} ${styles.teal}`}>
+                  <i className="fa-solid fa-bolt"></i>
+                </div>
+                <h3>Instant Splitting</h3>
+                <p>Instant splitting restaurant checks fast, fair, and hassle-free for everyone.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={`${styles.iconWrapper} ${styles.coral}`}>
+                  <i className="fa-solid fa-credit-card"></i>
+                </div>
+                <h3>Pay Your Way</h3>
+                <p>Pay your portion with your credit cards and don't wait to pay your way.</p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={`${styles.iconWrapper} ${styles.teal}`}>
+                  <i className="fa-solid fa-store"></i>
+                </div>
+                <h3>Seamless Integration</h3>
+                <p>Restaurant integration brings more information to you and smooths your dining experience.</p>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Scan QR Code</h3>
-            <p className="text-gray-600">Customers scan the QR code on their table</p>
           </div>
-          
-          <div className="text-center">
-            <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="h-8 w-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Browse Menu</h3>
-            <p className="text-gray-600">View menu items and add to cart</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ChefHat className="h-8 w-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Place Order</h3>
-            <p className="text-gray-600">Order goes directly to kitchen</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="h-8 w-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Pay Securely</h3>
-            <p className="text-gray-600">Pay with card or Apple Pay</p>
-          </div>
-        </div>
+        </section>
 
-        {/* Demo Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-          <h3 className="text-2xl font-bold mb-4">Try the Demo</h3>
-          <p className="text-gray-600 mb-8">
-            Experience the complete restaurant ordering system
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="/table/12" className="btn-primary">
-              🍽️ Table Menu
-            </Link>
-            <Link href="/bill-split/12" className="btn-secondary">
-              👥 Split Bill
-            </Link>
-            <Link href="/admin" className="btn-secondary">
-              👨‍💼 Admin Dashboard
-            </Link>
-            <Link href="/qr-generator" className="btn-secondary">
-              📱 QR Generator
-            </Link>
+        <section className={styles.howItWorks}>
+          <div className={styles.container}>
+            <h2 className={styles.sectionTitle}>How It Works</h2>
+            <div className={styles.grid3}>
+              <div className={styles.stepCard}>
+                <h3>1. Scan Bill</h3>
+                <div className={styles.stepIcon}>
+                  <i className="fa-solid fa-receipt"></i>
+                </div>
+              </div>
+              <div className={styles.stepCard}>
+                <h3>2. Select Items/Split Evenly</h3>
+                <div className={styles.stepIcon}>
+                  <i className="fa-solid fa-list-check"></i>
+                </div>
+              </div>
+              <div className={styles.stepCard}>
+                <h3>3. Pay & Go</h3>
+                <div className={styles.stepIcon}>
+                  <i className="fa-solid fa-mobile-screen-button"></i>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="mt-6 text-sm text-gray-500">
-            <p>✨ <strong>New:</strong> Try the bill splitting feature - perfect for groups!</p>
-          </div>
-        </div>
-      </div>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2025 QR Restaurant Ordering System. Built with Next.js and Vercel.</p>
+      <footer className={styles.footer}>
+        <div className={styles.container}>
+          <Link href="/" className={styles.logoLink}>
+            <img src="/logo2.png" alt="Restaurant Logo" className={styles.logoImg} />
+          </Link>
+          <p>© 2025 Splytro. All rights reserved.</p>
         </div>
       </footer>
     </div>
