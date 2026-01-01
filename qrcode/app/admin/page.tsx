@@ -106,6 +106,9 @@ export default function AdminPage() {
               <h1 className="text-2xl font-bold" style={{ color: '#2E3A45' }}>Restaurant Admin</h1>
             </div>
             <div className="flex space-x-4">
+              <Link href="/admin/tables" className="hover:underline" style={{ color: '#6e7c8b' }}>
+                Manage Tables
+              </Link>
               <Link href="/qr-generator" className="hover:underline" style={{ color: '#6e7c8b' }}>
                 QR Generator
               </Link>
