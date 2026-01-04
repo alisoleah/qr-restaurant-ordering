@@ -6,6 +6,7 @@ import { Star, Clock, Users } from 'lucide-react';
 import MenuSection from '../../../components/MenuSection';
 import CartSummary from '../../../components/CartSummary';
 import { useOrder } from '../../../context/OrderContext';
+import { TableSessionProvider, useTableSession } from '../../context/TableSessionContext';
 
 interface MenuItem {
   id: string;
@@ -34,9 +35,10 @@ interface Table {
   status: string;
 }
 
-export default function TablePage() {
+function TableContent() {
   const params = useParams();
   const tableNumber = params.tableNumber as string;
+  const { session, isLoading: sessionLoading } = useTableSession();
   const { dispatch } = useOrder();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -134,12 +136,12 @@ export default function TablePage() {
     }
   };
 
-  if (loading) {
+  if (loading || sessionLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading menu...</p>
+          <p className="text-gray-600">Loading experience...</p>
         </div>
       </div>
     );
@@ -170,7 +172,7 @@ export default function TablePage() {
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900">{restaurant?.name}</h1>
                 <p className="text-gray-600 mt-1">{restaurant?.address}</p>
-                
+
                 <div className="flex items-center space-x-4 mt-3">
                   <div className="flex items-center space-x-1">
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
@@ -188,7 +190,7 @@ export default function TablePage() {
                   </div>
                 </div>
               </div>
-              
+
               <CartSummary />
             </div>
           </div>
@@ -203,11 +205,10 @@ export default function TablePage() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-200 ${
-                  selectedCategory === category
+                className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-200 ${selectedCategory === category
                     ? 'bg-blue-600 text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-102'
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -223,7 +224,7 @@ export default function TablePage() {
             <p className="text-gray-500">No items available in this category</p>
           </div>
         ) : (
-          <MenuSection 
+          <MenuSection
             title={selectedCategory}
             items={filteredItems}
             tableNumber={tableNumber}
@@ -246,5 +247,13 @@ export default function TablePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function TablePage() {
+  return (
+    <TableSessionProvider>
+      <TableContent />
+    </TableSessionProvider>
   );
 }

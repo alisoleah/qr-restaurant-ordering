@@ -44,6 +44,7 @@ model Table {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   orders     Order[]
   billSplits BillSplit[]
+  sessions   TableSession[]
 
   @@unique([restaurantId, number])
   @@index([restaurantId, status])
@@ -160,9 +161,14 @@ model Order {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   billSplit  BillSplit? @relation(fields: [billSplitId], references: [id])
   person     Person? @relation(fields: [personId], references: [id])
+  
+  tableSessionId String?
+  tableSession   TableSession? @relation(fields: [tableSessionId], references: [id])
+
   items      OrderItem[]
 
   @@index([tableId, status])
+  @@index([tableSessionId])
   @@index([billSplitId, personId])
   @@index([restaurantId, status, createdAt])
   @@index([orderNumber])
@@ -237,4 +243,25 @@ model AdminUser {
   updatedAt DateTime @updatedAt
 
   @@map("admin_users")
+}
+
+model TableSession {
+  id        String   @id @default(cuid())
+  tableId   String
+  status    SessionStatus @default(ACTIVE)
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  
+  // Relations
+  table     Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([tableId, status])
+  @@map("table_sessions")
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAYMENT_PENDING
+  CLOSED
 }
