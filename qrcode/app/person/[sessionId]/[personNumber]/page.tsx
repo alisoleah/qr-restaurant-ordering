@@ -42,7 +42,7 @@ interface Restaurant {
 
 interface BillSplit {
   id: string;
-  sessionId: string;
+  tableSessionId: string;
   totalPeople: number;
   splitType?: string;
   availableItems?: any[];
@@ -57,7 +57,7 @@ export default function PersonMenuPage() {
   const params = useParams();
   const sessionId = params.sessionId as string;
   const personNumber = parseInt(params.personNumber as string);
-  
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [person, setPerson] = useState<Person | null>(null);
   const [billSplit, setBillSplit] = useState<BillSplit | null>(null);
@@ -73,7 +73,7 @@ export default function PersonMenuPage() {
   const fetchPersonData = async () => {
     try {
       setLoading(true);
-      
+
       const [personResponse, menuResponse] = await Promise.all([
         fetch(`/api/person/${sessionId}/${personNumber}`), // Updated API endpoint
         fetch('/api/menu')
@@ -264,11 +264,10 @@ export default function PersonMenuPage() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-200 ${
-                  selectedCategory === category
+                className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-200 ${selectedCategory === category
                     ? 'bg-blue-600 text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-102'
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -295,7 +294,7 @@ export default function PersonMenuPage() {
             <p className="text-gray-500">No items available in this category</p>
           </div>
         ) : (
-          <MenuSection 
+          <MenuSection
             title={selectedCategory}
             items={filteredItems}
             tableNumber={billSplit.table.number}

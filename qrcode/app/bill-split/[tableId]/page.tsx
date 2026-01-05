@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 interface BillSplit {
   id: string;
-  sessionId: string;
+  tableSessionId: string;
   totalPeople: number;
   isActive: boolean;
   persons: Person[];
@@ -304,19 +304,18 @@ export default function BillSplitPage() {
                         </div>
                       )}
                     </div>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      person.isCompleted 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${person.isCompleted
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {person.isCompleted ? 'Paid' : 'Pending'}
                     </div>
                   </div>
 
                   {person.qrCode && (
                     <div className="text-center mb-4">
-                      <img 
-                        src={person.qrCode} 
+                      <img
+                        src={person.qrCode}
                         alt={`QR Code for ${person.name || `Person ${person.personNumber}`}`}
                         className="mx-auto border rounded-lg mb-3"
                         style={{ maxWidth: '150px' }}
@@ -332,7 +331,7 @@ export default function BillSplitPage() {
                       <span>Current Total:</span>
                       <span className="font-medium">EGP {person.totalAmount.toFixed(2)}</span>
                     </div>
-                    
+
                     <div className="flex space-x-2">
                       {person.qrCode && (
                         <button
@@ -343,7 +342,7 @@ export default function BillSplitPage() {
                         </button>
                       )}
                       <Link
-                        href={`/person/${billSplit.sessionId}/${person.personNumber}`}
+                        href={`/person/${billSplit.tableSessionId}/${person.personNumber}`}
                         className="flex-1 btn-primary text-sm py-2 text-center"
                       >
                         View Menu
