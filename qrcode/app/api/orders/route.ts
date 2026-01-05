@@ -32,6 +32,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Find active session
+    let tableSession = await db.tableSession.findFirst({
+      where: {
+        tableId: table.id,
+        status: 'ACTIVE'
+      }
+    });
+
+    // If no active session, create one (auto-create logic)
+    if (!tableSession) {
+      tableSession = await db.tableSession.create({
+        data: {
+          tableId: table.id,
+          status: 'ACTIVE'
+        }
+      });
+    }
+
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
@@ -40,6 +58,7 @@ export async function POST(request: NextRequest) {
       data: {
         orderNumber,
         tableId: table.id,
+        tableSessionId: tableSession.id, // Link to session
         restaurantId: table.restaurantId,
         customerEmail,
         subtotal,

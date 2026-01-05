@@ -10,8 +10,11 @@ export async function POST(
     const { items, tip, tipType, tipPercentage, customerEmail, customerPhone, specialRequests } = await request.json();
 
     // Find the bill split and person
-    const billSplit = await db.billSplit.findUnique({
-      where: { sessionId },
+    const billSplit = await db.billSplit.findFirst({
+      where: {
+        tableSessionId: sessionId,
+        isActive: true
+      },
       include: {
         table: {
           include: {
@@ -34,7 +37,7 @@ export async function POST(
     const restaurant = billSplit.table.restaurant;
 
     // Calculate totals
-    const subtotal = items.reduce((sum: number, item: any) => 
+    const subtotal = items.reduce((sum: number, item: any) =>
       sum + (item.unitPrice * item.quantity), 0
     );
 

@@ -54,7 +54,11 @@ model Table {
 model BillSplit {
   id           String @id @default(cuid())
   tableId      String
-  sessionId    String @unique
+  
+  // Link to the active TableSession
+  tableSessionId String
+  tableSession   TableSession @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+
   totalPeople  Int    @default(1)
   splitType    String @default("equal") // "equal" or "itemized"
   availableItems Json? // For itemized split: stores the items that can be selected
@@ -68,7 +72,7 @@ model BillSplit {
   orders   Order[]
 
   @@index([tableId, isActive])
-  @@index([sessionId])
+  @@index([tableSessionId])
   @@map("bill_splits")
 }
 
@@ -255,6 +259,7 @@ model TableSession {
   // Relations
   table     Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
   orders    Order[]
+  billSplits BillSplit[]
 
   @@index([tableId, status])
   @@map("table_sessions")

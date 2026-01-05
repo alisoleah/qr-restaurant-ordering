@@ -8,8 +8,11 @@ export async function GET(
   try {
     const { sessionId, personNumber } = params;
 
-    const billSplit = await db.billSplit.findUnique({
-      where: { sessionId },
+    const billSplit = await db.billSplit.findFirst({
+      where: {
+        tableSessionId: sessionId,
+        isActive: true
+      },
       include: {
         table: {
           include: {

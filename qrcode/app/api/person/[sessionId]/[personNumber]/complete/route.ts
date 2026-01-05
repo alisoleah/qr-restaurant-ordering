@@ -9,8 +9,11 @@ export async function POST(
     const { sessionId, personNumber } = params;
     const { paymentMethod, paymentId } = await request.json();
 
-    const billSplit = await db.billSplit.findUnique({
-      where: { sessionId },
+    const billSplit = await db.billSplit.findFirst({
+      where: {
+        tableSessionId: sessionId,
+        isActive: true
+      },
       include: {
         persons: {
           where: {

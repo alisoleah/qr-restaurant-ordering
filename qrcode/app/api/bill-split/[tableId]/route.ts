@@ -11,7 +11,7 @@ export async function GET(
 
     // Find table by number (not ID) - your schema uses String for number field
     const table = await db.table.findFirst({
-      where: { 
+      where: {
         number: tableNumber,
         // Optionally add restaurantId filter if you have multiple restaurants
       },
@@ -84,6 +84,18 @@ export async function POST(
       return NextResponse.json({ error: 'Table not found' }, { status: 404 });
     }
 
+    // Find active table session
+    const tableSession = await db.tableSession.findFirst({
+      where: {
+        tableId: table.id,
+        status: 'ACTIVE'
+      }
+    });
+
+    if (!tableSession) {
+      return NextResponse.json({ error: 'No active session found for this table' }, { status: 404 });
+    }
+
     // Deactivate any existing bill splits for this table
     await db.billSplit.updateMany({
       where: {
@@ -93,15 +105,16 @@ export async function POST(
       data: { isActive: false },
     });
 
-    // Create new bill split with proper sessionId
-    const sessionId = `${table.id}-${Date.now()}`;
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
     // Create persons data first
     const personsData = [];
     for (let i = 1; i <= totalPeople; i++) {
-      const qrUrl = `${baseUrl}/person/${sessionId}/${i}`;
-      
+      // Use tableSession.id instead of timestamp-based sessionId 
+      // but might need to rethink if person URL needs to be shareable outside active session context?
+      // For now, let's use available route structure.
+      const qrUrl = `${baseUrl}/person/${tableSession.id}/${i}`;
+
       const qrCode = await QRCode.toDataURL(qrUrl, {
         width: 256,
         margin: 2,
@@ -120,7 +133,7 @@ export async function POST(
     const billSplit = await db.billSplit.create({
       data: {
         tableId: table.id,
-        sessionId,
+        tableSessionId: tableSession.id, // Link to active session
         totalPeople,
         splitType,
         availableItems: splitType === 'itemized' ? availableItems : null,
@@ -157,7 +170,7 @@ export async function PATCH(
     // Validate totalPeople
     if (!totalPeople || totalPeople < 1 || totalPeople > 20) {
       return NextResponse.json(
-        { error: 'Invalid number of people (1-20)' }, 
+        { error: 'Invalid number of people (1-20)' },
         { status: 400 }
       );
     }
@@ -194,8 +207,10 @@ export async function PATCH(
     if (totalPeople > currentPeople) {
       // Add new people
       const newPersonsData = [];
+      const tableSessionId = billSplit.tableSessionId;
+
       for (let i = currentPeople + 1; i <= totalPeople; i++) {
-        const qrUrl = `${baseUrl}/person/${billSplit.sessionId}/${i}`;
+        const qrUrl = `${baseUrl}/person/${tableSessionId}/${i}`;
         const qrCode = await QRCode.toDataURL(qrUrl, {
           width: 256,
           margin: 2,
@@ -218,9 +233,9 @@ export async function PATCH(
     } else if (totalPeople < currentPeople) {
       // Only remove people who haven't ordered and aren't completed
       const personsToDelete = billSplit.persons.filter(
-        person => 
-          person.personNumber > totalPeople && 
-          !person.isCompleted && 
+        person =>
+          person.personNumber > totalPeople &&
+          !person.isCompleted &&
           person.totalAmount === 0 &&
           person.orders.length === 0 // Check if they have any orders
       );

@@ -20,17 +20,31 @@ export async function GET(
       );
     }
 
-    // Get all unpaid order items for this table
-    const unpaidItems = await db.orderItem.findMany({
+    // Find active session
+    const session = await db.tableSession.findFirst({
       where: {
-        order: {
-          tableId: table.id,
-          paymentStatus: {
-            not: 'COMPLETED'
-          }
-        },
-        isPaid: false
+        tableId: table.id,
+        status: 'ACTIVE'
+      }
+    });
+
+    // Get all unpaid order items for this table, filtered by session if exists
+    const whereCondition: any = {
+      order: {
+        tableId: table.id,
+        paymentStatus: {
+          not: 'COMPLETED'
+        }
       },
+      isPaid: false
+    };
+
+    if (session) {
+      whereCondition.order.tableSessionId = session.id;
+    }
+
+    const unpaidItems = await db.orderItem.findMany({
+      where: whereCondition,
       include: {
         menuItem: true,
         order: true
